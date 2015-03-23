@@ -1,7 +1,7 @@
 (ns clucie.core
   (:require [clucie.store :as store])
   (:import [org.apache.lucene.document Document Field Field$Index Field$Store]
-           (org.apache.lucene.analysis.standard StandardAnalyzer)
+           [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.queryparser.classic QueryParser]
            [org.apache.lucene.index IndexReader]
            [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc Scorer TermQuery]))
@@ -14,7 +14,7 @@
                 Field$Store/YES
                 Field$Index/ANALYZED)))
 
-(defn map->document
+(defn- map->document
   "Create a Document from a map."
   [map]
   (let [document (Document.)]
@@ -38,8 +38,8 @@
 
 (defn search
   "Search the supplied index with a query string."
-  [index query key max-results]
-  (with-open [reader (store/store-reader index)]
+  [index-store query key max-results]
+  (with-open [reader (store/store-reader index-store)]
     (let [searcher (IndexSearcher. reader)
           parser (doto (QueryParser. (name key) (StandardAnalyzer.))
                    (.setDefaultOperator QueryParser/AND_OPERATOR))

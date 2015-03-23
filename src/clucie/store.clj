@@ -2,7 +2,7 @@
   (:import [java.io StringReader File]
            [java.nio.file Paths]
            [org.apache.lucene.analysis Analyzer]
-           (org.apache.lucene.analysis.standard StandardAnalyzer)
+           [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.store NIOFSDirectory RAMDirectory Directory]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexReader DirectoryReader]
            [org.apache.lucene.util Version]))

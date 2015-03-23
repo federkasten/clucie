@@ -1,6 +1,6 @@
-(defproject clucy "0.1.0-SNAPSHOT"
+(defproject clucie "0.1.0-SNAPSHOT"
   :description "Clojure for the Lucene"
-  :url "http://github/federkasten/clucy"
+  :url "https://github.com/federkasten/clucy"
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.apache.lucene/lucene-core "5.0.0"]
                  [org.apache.lucene/lucene-queryparser "5.0.0"]
