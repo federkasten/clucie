@@ -1,7 +1,7 @@
 (ns clucie.core
-  (:require [clucie.store :as store])
+  (:require [clucie.store :as store]
+            [clucie.analysis :refer [standard-analyzer]])
   (:import [org.apache.lucene.document Document Field FieldType]
-           [org.apache.lucene.analysis.standard StandardAnalyzer]
            [org.apache.lucene.queryparser.classic QueryParser]
            [org.apache.lucene.index IndexReader IndexOptions]
            [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc Scorer TermQuery]))
@@ -55,11 +55,13 @@
 
 (defn add!
   "Add hash-maps to the search index."
-  [index-store maps keys]
-  (with-open [writer (store/store-writer index-store)]
-    (doseq [m maps]
-      (.addDocument writer
-                    (map->document m (set keys))))))
+  ([index-store maps keys]
+   (add! index-store maps keys (standard-analyzer)))
+  ([index-store maps keys analyzer]
+   (with-open [writer (store/store-writer index-store analyzer)]
+     (doseq [m maps]
+       (.addDocument writer
+                     (map->document m (set keys)))))))
 
 (defn- document->map
   "Turn a Document object into a map."
@@ -69,14 +71,16 @@
 
 (defn search
   "Search the supplied index with a query string."
-  [index-store key query-string max-results]
-  (with-open [reader (store/store-reader index-store)]
-    (let [searcher (IndexSearcher. reader)
-          parser (doto (QueryParser. (name key) (StandardAnalyzer.))
-                   (.setDefaultOperator QueryParser/AND_OPERATOR))
-          query (.parse parser query-string)
-          hits (.search searcher query (int max-results))]
-      (doall
-       (for [hit (map (partial aget (.scoreDocs hits))
-                      (range (.totalHits hits)))]
-         (document->map (.doc ^IndexSearcher searcher (.doc ^ScoreDoc hit))))))))
+  ([index-store key query-string max-results]
+   (search index-store key query-string max-results (standard-analyzer)))
+  ([index-store key query-string max-results analyzer]
+   (with-open [reader (store/store-reader index-store)]
+     (let [searcher (IndexSearcher. reader)
+           parser (doto (QueryParser. (name key) analyzer)
+                    (.setDefaultOperator QueryParser/AND_OPERATOR))
+           query (.parse parser query-string)
+           hits (.search searcher query (int max-results))]
+       (doall
+        (for [hit (map (partial aget (.scoreDocs hits))
+                       (range (.totalHits hits)))]
+          (document->map (.doc ^IndexSearcher searcher (.doc ^ScoreDoc hit)))))))))
