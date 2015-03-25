@@ -5,6 +5,17 @@
            [org.apache.lucene.analysis.ngram NGramTokenFilter]
            [org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents]))
 
+(defmacro make-analyzer
+  [tokenizer & filters]
+  `(proxy [org.apache.lucene.analysis.Analyzer] []
+     (createComponents [field-name#]
+       (let [src# (new ~tokenizer)
+             token# (-> src#
+                        ~@filters)]
+         (proxy [org.apache.lucene.analysis.Analyzer$TokenStreamComponents] [src# token#]
+           (setReader [reader#]
+             (proxy-super setReader reader#)))))))
+
 (defn- char-set
   ^CharArraySet
   ([stop-words]
@@ -20,16 +31,9 @@
    (StandardAnalyzer. (char-set stop-words))))
 
 (defn ngram-analyzer
-  ^Analyzer
   [min-length max-length stop-words]
-  (proxy [Analyzer] []
-    (createComponents [field-name]
-      (let [src (new StandardTokenizer)
-            token (-> src
-                      (NGramTokenFilter. min-length max-length)
-                      (StandardFilter.)
-                      (LowerCaseFilter.)
-                      (StopFilter. (char-set stop-words)))]
-        (proxy [Analyzer$TokenStreamComponents] [src token]
-          (setReader [reader]
-            (proxy-super setReader reader)))))))
+  (make-analyzer StandardTokenizer
+                 (NGramTokenFilter. min-length max-length)
+                 (StandardFilter.)
+                 (LowerCaseFilter.)
+                 (StopFilter. (char-set stop-words))))
