@@ -3,7 +3,7 @@
             [clucie.analysis :refer [standard-analyzer]])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.queryparser.classic QueryParser]
-           [org.apache.lucene.index IndexReader IndexOptions]
+           [org.apache.lucene.index IndexReader IndexOptions Term]
            [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc Scorer TermQuery]))
 
 (defn- estimate-value
@@ -62,6 +62,23 @@
      (doseq [m maps]
        (.addDocument writer
                      (map->document m (set keys)))))))
+
+(defn update!
+  ([index-store m keys search-key search-val]
+   (update! index-store m keys search-key search-val (standard-analyzer)))
+  ([index-store m keys search-key search-val analyzer]
+   (with-open [writer (store/store-writer index-store analyzer)]
+     (.updateDocument writer
+                      (Term. (name search-key) (str search-val))
+                      (map->document m (set keys))))))
+
+(defn delete!
+  ([index-store search-key search-val]
+   (delete! index-store search-key search-val (standard-analyzer)))
+  ([index-store search-key search-val analyzer]
+   (with-open [writer (store/store-writer index-store analyzer)]
+     (.deleteDocuments writer
+                       (into-array [(Term. (name search-key) (str search-val))])))))
 
 (defn- document->map
   "Turn a Document object into a map."

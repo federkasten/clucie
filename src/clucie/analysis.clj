@@ -15,7 +15,7 @@
 (defn standard-analyzer
   ^Analyzer
   ([]
-   (standard-analyzer [] false))
+   (standard-analyzer []))
   ([stop-words]
    (StandardAnalyzer. (char-set stop-words))))
 
