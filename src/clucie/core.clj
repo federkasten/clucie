@@ -2,9 +2,9 @@
   (:require [clucie.store :as store]
             [clucie.analysis :refer [standard-analyzer]])
   (:import [org.apache.lucene.document Document Field FieldType]
-           [org.apache.lucene.queryparser.classic QueryParser]
+           [org.apache.lucene.util QueryBuilder]
            [org.apache.lucene.index IndexReader IndexOptions Term]
-           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc Scorer TermQuery]))
+           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc]))
 
 (defn- estimate-value
   [v]
@@ -86,16 +86,28 @@
   (into {} (for [^Field f (.getFields document)]
              [(keyword (.name f)) (.stringValue f)])))
 
+(defn query-form->query
+  [query-form builder]
+  (cond
+    (vector? query-form) (let [query (BooleanQuery.)]
+                           (doseq [q (map #(query-form->query % builder) query-form)]
+                             (.add query q BooleanClause$Occur/SHOULD))
+                           query)
+    (map? query-form) (let [query (BooleanQuery.)]
+                        (doseq [q (map (fn [[k v]]
+                                         (.createPhraseQuery builder (name k) (str v))) query-form)]
+                          (.add query q BooleanClause$Occur/MUST))
+                        query)))
+
 (defn search
   "Search the supplied index with a query string."
-  ([index-store key query-string max-results]
-   (search index-store key query-string max-results (standard-analyzer)))
-  ([index-store key query-string max-results analyzer]
+  ([index-store query-form max-results]
+   (search index-store query-form max-results (standard-analyzer)))
+  ([index-store query-form max-results analyzer]
    (with-open [reader (store/store-reader index-store)]
      (let [searcher (IndexSearcher. reader)
-           parser (doto (QueryParser. (name key) analyzer)
-                    (.setDefaultOperator QueryParser/AND_OPERATOR))
-           query (.parse parser query-string)
+           builder (QueryBuilder. analyzer)
+           query (query-form->query query-form builder)
            hits (.search searcher query (int max-results))]
        (doall
         (for [hit (map (partial aget (.scoreDocs hits))

@@ -46,12 +46,14 @@
                   (StopFilter. (char-set stop-words))))
 
 (defn cjk-analyzer
+  ^Analyzer
   ([]
    (CJKAnalyzer.))
   ([stop-words]
    (CJKAnalyzer. (char-set stop-words))))
 
 (defn analyzer-mapping
+  ^Analyzer
   [default mapping]
   (PerFieldAnalyzerWrapper. default
                             (into {} (map (fn [[k v]] [(name k) v]) mapping))))
