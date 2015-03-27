@@ -86,7 +86,7 @@
   (into {} (for [^Field f (.getFields document)]
              [(keyword (.name f)) (.stringValue f)])))
 
-(defn query-form->query
+(defn- query-form->query
   [query-form builder]
   (cond
     (vector? query-form) (let [query (BooleanQuery.)]
@@ -94,8 +94,11 @@
                              (.add query q BooleanClause$Occur/SHOULD))
                            query)
     (map? query-form) (let [query (BooleanQuery.)]
-                        (doseq [q (map (fn [[k v]]
-                                         (.createPhraseQuery builder (name k) (str v))) query-form)]
+                        (doseq [q (->>  query-form
+                                        (map (fn [[k v]]
+                                               (when-not (empty? (str v))
+                                                 (.createBooleanQuery builder (name k) (str v)))))
+                                       (filter #(not (nil? %))))]
                           (.add query q BooleanClause$Occur/MUST))
                         query)))
 
