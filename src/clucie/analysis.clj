@@ -11,7 +11,7 @@
   [tokenizer & filters]
   `(proxy [org.apache.lucene.analysis.Analyzer] []
      (createComponents [field-name#]
-       (let [src# (new ~tokenizer)
+       (let [src# ~tokenizer
              token# (-> src#
                         ~@filters)]
          (proxy [org.apache.lucene.analysis.Analyzer$TokenStreamComponents] [src# token#]
@@ -39,7 +39,7 @@
 
 (defn ngram-analyzer
   [min-length max-length stop-words]
-  (build-analyzer StandardTokenizer
+  (build-analyzer (StandardTokenizer.)
                   (NGramTokenFilter. min-length max-length)
                   (StandardFilter.)
                   (LowerCaseFilter.)
