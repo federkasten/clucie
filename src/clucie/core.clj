@@ -98,7 +98,7 @@
                                         (map (fn [[k v]]
                                                (when-not (empty? (str v))
                                                  (.createBooleanQuery builder (name k) (str v)))))
-                                       (filter #(not (nil? %))))]
+                                        (filter #(not (nil? %))))]
                           (.add query q BooleanClause$Occur/MUST))
                         query)))
 
