@@ -113,6 +113,7 @@
            query (query-form->query query-form builder)
            hits (.search searcher query (int max-results))]
        (doall
-        (for [hit (map (partial aget (.scoreDocs hits))
-                       (range (.totalHits hits)))]
-          (document->map (.doc ^IndexSearcher searcher (.doc ^ScoreDoc hit)))))))))
+        (vec
+         (for [hit (map (partial aget (.scoreDocs hits))
+                        (range (.totalHits hits)))]
+           (document->map (.doc ^IndexSearcher searcher (.doc ^ScoreDoc hit))))))))))
