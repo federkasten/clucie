@@ -12,23 +12,25 @@
 
 (def test-store (atom nil))
 
-;;; TODO: Add more data and tests
 (def all-entries
   [["1" "20130819"] ; NB: this entry is like #3 (match both)
    ["2" "佐藤先生"]
    ["3" "実験済み(20140723)"] ; NB: this entry is like #1
-   ])
+   ["4" "これは形態素解析の試験用エントリです。alphabetic wordsもあります。"]
+   ["5" "ぬふあうえおやゆよわほへー\n\tたていすかんなにらせ"]])
 
 (def entry1 (nth all-entries 0))
 (def entry2 (nth all-entries 1))
 (def entry3 (nth all-entries 2))
+(def entry4 (nth all-entries 3))
+(def entry5 (nth all-entries 4))
 
 (defn- tidy-ascii-name [n]
   (cstr/join " "
              (map #(cstr/replace % #"(_|-|\.)" " ")
                   (re-seq #"\w+" n))))
 
-(def entry-analyzer
+(def ^:dynamic entry-analyzer
   (analysis/analyzer-mapping (analysis/keyword-analyzer)
                              {:doc (analysis/cjk-analyzer)
                               :ascii-name (analysis/ngram-analyzer 2 8 [])}))
@@ -110,17 +112,16 @@
         (boolean (first (filter #(= entry-key (:key %))
                                 results)))))))
 
-;;; TODO: Add test to check :ascii-name
-;;; TODO: Add more tests
-
 (with-state-changes [(before :facts (prepare-store!))
                      (after :facts (finish-store!))]
   (facts "add new entries and search entries"
     (fact "search exists entries"
       (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
-      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2)))
+      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "藤先" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))
     (fact "search new entries"
-      (let [entry-key "4"
+      (let [entry-key "9999"
             entry-doc "テスト"]
         (search-entries entry-doc 10) => (results-is-valid? 0)
         (add-entry! entry-key entry-doc) => nil
@@ -160,7 +161,7 @@
                        (after :facts (finish-store! tmp-store-path))]
     (facts "disk store"
       (let [[old-key old-doc] entry2
-            new-key "5"
+            new-key "9998"
             new-doc "同一内容"]
         (search-entries old-doc 10) => (results-is-valid? 1 old-key)
         (search-entries new-doc 10) => (results-is-valid? 0)
@@ -171,9 +172,28 @@
         (search-entries new-doc 10) => (results-is-valid? 2 new-key)
         (delete-entry! old-key) => nil
         (search-entries new-doc 10) => (results-is-valid? 1 new-key)
-        ;; Switch another session
+        ;; Switch to another session
         (do
           (.close @test-store)
           (reset! test-store (store/disk-store tmp-store-path))
           nil) => nil
         (search-entries new-doc 10) => (results-is-valid? 1 new-key)))))
+
+(facts "kuromoji tokenizer"
+  ;; (doseq [doc (map second all-entries)]
+  ;;   (prn (analysis/kuromoji-tokenize doc)))
+  (let [text "牛焼肉定食"
+        result ["牛" "焼肉" "定食"]]
+    (analysis/kuromoji-tokenize text) => result))
+
+(binding [entry-analyzer (analysis/analyzer-mapping
+                           (analysis/keyword-analyzer)
+                           {:doc (analysis/kuromoji-analyzer)
+                            :ascii-name (analysis/ngram-analyzer 2 8 [])})]
+  (with-state-changes [(before :facts (prepare-store!))
+                       (after :facts (finish-store!))]
+    (fact "kuromoji analyzer"
+      (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "藤先" 10) => (results-is-valid? 0)
+      (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))))
