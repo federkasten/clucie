@@ -38,20 +38,12 @@
         field (Field. key value (gen-field-type indexed?))]
     (.add document field)))
 
-(defn- add-indexed-field
-  "Add a Field to a Document."
-  [^Document document key value]
-  (add-field document key value true))
-
 (defn- map->document
   "Create a Document from a map."
   [m keys]
   (let [document (Document.)]
     (doseq [[key value] m]
-      ((if (contains? keys key)
-          add-indexed-field
-          add-field)
-       document key value))
+      (add-field document key value (contains? keys key)))
     document))
 
 (defn add!

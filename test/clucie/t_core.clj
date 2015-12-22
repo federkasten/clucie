@@ -9,7 +9,10 @@
             [clucie.store :as store])
   (:import [java.util UUID]
            [java.io File]
-           [org.apache.lucene.store NIOFSDirectory Directory]))
+           [org.apache.lucene.store NIOFSDirectory Directory]
+           [org.apache.lucene.analysis.util CharArraySet]
+           [org.apache.lucene.analysis TokenStream]
+           [org.apache.lucene.analysis.ja JapaneseTokenizer$Mode]))
 
 (def test-store (atom nil))
 
@@ -100,14 +103,15 @@
       (delete-dir! (io/file path)))
     (reset! test-store nil)))
 
-(defn- prepare-store! [& [path]]
+(defn- prepare-store! [& [path dont-add-test-entries?]]
   (when @test-store
     (finish-store! path))
   (let [store (if path
                 (store/disk-store path)
                 (store/memory-store))]
     (reset! test-store store)
-    (add-all-test-entries!)))
+    (when-not dont-add-test-entries?
+      (add-all-test-entries!))))
 
 (defn- results-is-valid? [quantity & [entry-key]]
   (if (or (zero? quantity) (not entry-key))
@@ -123,6 +127,7 @@
   (facts "add new entries and search entries"
     (fact "search exists entries"
       (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤先生" 10) => (results-is-valid? 1 (first entry2))
       (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
       (search-entries "藤先" 10) => (results-is-valid? 1 (first entry2))
       (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))
@@ -132,6 +137,22 @@
         (search-entries entry-doc 10) => (results-is-valid? 0)
         (add-entry! entry-key entry-doc) => nil
         (search-entries entry-doc 10) => (results-is-valid? 1 entry-key)))
+    (fact "search new entries with non-string keys"
+      (let [entry-key 34567
+            entry-doc "34567"]
+        (search-entries entry-doc 10) => (results-is-valid? 0)
+        (add-entry! entry-key entry-doc) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 1 (str entry-key)))
+      (let [entry-key :test
+            entry-doc ":test"]
+        (search-entries entry-doc 10) => (results-is-valid? 0)
+        (add-entry! entry-key entry-doc) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 1 (name entry-key)))
+      (let [entry-key (java.util.UUID/randomUUID)
+            entry-doc "random"]
+        (search-entries entry-doc 10) => (results-is-valid? 0)
+        (add-entry! entry-key entry-doc) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 1 (str entry-key))))
     (fact "search with pagination"
       (let [doc-prefix "ページング用"]
         (dotimes [i 105]
@@ -175,6 +196,59 @@
       (delete-entry! (first entry1)) => nil
       (search-entries (second entry3) 10) => (results-is-valid? 0))))
 
+(binding [entry-analyzer nil]
+  (with-state-changes [(before :facts (prepare-store! nil true))
+                       (after :facts (finish-store!))]
+    (facts "manipulate with default analyzer"
+      (let [new-key "100"
+            new-document1 "apple"
+            new-document2 "orange"]
+        (core/add! @test-store
+                   [{:key new-key
+                     :doc new-document1
+                     :ascii-name (tidy-ascii-name new-document1)}]
+                   [:key :doc :ascii-name])
+        (search-entries new-document1 10) => (results-is-valid? 1 new-key)
+        (search-entries new-document2 10) => (results-is-valid? 0)
+        (core/update! @test-store
+                      {:key new-key
+                       :doc new-document2
+                       :ascii-name (tidy-ascii-name new-document2)}
+                      [:key :doc :ascii-name]
+                      :key new-key)
+        (search-entries new-document1 10) => (results-is-valid? 0)
+        (search-entries new-document2 10) => (results-is-valid? 1 new-key)
+        (core/delete! @test-store :key new-key)
+        (search-entries new-document1 10) => (results-is-valid? 0)
+        (search-entries new-document2 10) => (results-is-valid? 0)))))
+
+(with-state-changes [(before :facts (prepare-store!))
+                     (after :facts (finish-store!))]
+  (facts "add/update without index"
+    (let [new-key "100"
+          new-document1 "林檎"
+          new-document2 "蜜柑"]
+      (search-entries new-document1 10) => (results-is-valid? 0)
+      (search-entries new-document2 10) => (results-is-valid? 0)
+      (core/add! @test-store
+                 [{:key new-key
+                   :doc new-document1
+                   :ascii-name (tidy-ascii-name new-document1)}]
+                 [])
+      (search-entries new-document1 10) => (results-is-valid? 0)
+      (search-entries new-document2 10) => (results-is-valid? 0)
+      (core/update! @test-store
+                    {:key new-key
+                     :doc new-document2
+                     :ascii-name (tidy-ascii-name new-document2)}
+                    []
+                    :key new-key)
+      (search-entries new-document1 10) => (results-is-valid? 0)
+      (search-entries new-document2 10) => (results-is-valid? 0)
+      (core/delete! @test-store :key new-key)
+      (search-entries new-document1 10) => (results-is-valid? 0)
+      (search-entries new-document2 10) => (results-is-valid? 0))))
+
 (let [tmp-store-path (get-tmp-dir)]
   (with-state-changes [(before :facts (prepare-store! tmp-store-path))
                        (after :facts (finish-store! tmp-store-path))]
@@ -201,9 +275,54 @@
 (facts "kuromoji tokenizer"
   ;; (doseq [doc (map second all-entries)]
   ;;   (prn (analysis/kuromoji-tokenize doc)))
-  (let [text "牛焼肉定食"
-        result ["牛" "焼肉" "定食"]]
-    (analysis/kuromoji-tokenize text) => result))
+  (fact "kuromoji tokenize"
+    (let [text "牛焼肉定食"
+          result ["牛" "焼肉" "定食"]]
+      (analysis/kuromoji-tokenize text) => result))
+  (fact "kuromoji tokenize with factory"
+    (let [text "ギュウヤキニク、牛焼肉定食です。"
+          result ["ギ" "ュ" "ウ" "ヤ" "キ" "ニ" "ク" "牛" "焼肉" "定食" "です"]
+          factory TokenStream/DEFAULT_TOKEN_ATTRIBUTE_FACTORY]
+      (analysis/kuromoji-tokenize text nil true :extended factory) => result)))
+
+(binding [entry-analyzer (analysis/analyzer-mapping
+                           (analysis/keyword-analyzer)
+                           {:doc (analysis/standard-analyzer)
+                            :ascii-name (analysis/ngram-analyzer 2 8 [])})]
+  (with-state-changes [(before :facts (prepare-store!))
+                       (after :facts (finish-store!))]
+    (facts "standard analyzer"
+      (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤先生" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "藤先" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))))
+
+(binding [entry-analyzer (analysis/analyzer-mapping
+                           (analysis/keyword-analyzer)
+                           {:doc (analysis/standard-analyzer (map identity "先生"))
+                            :ascii-name (analysis/ngram-analyzer 2 8 [])})]
+  (with-state-changes [(before :facts (prepare-store!))
+                       (after :facts (finish-store!))]
+    (facts "standard analyzer with stop-words"
+      (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤先生" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "藤先" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "先生" 10) => (results-is-valid? 0))))
+
+(binding [entry-analyzer (analysis/analyzer-mapping
+                           (analysis/keyword-analyzer)
+                           {:doc (analysis/cjk-analyzer (map identity "先生"))
+                            :ascii-name (analysis/ngram-analyzer 2 8 [])})]
+  (with-state-changes [(before :facts (prepare-store!))
+                       (after :facts (finish-store!))]
+    (facts "cjk analyzer with stop-words"
+      (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤先生" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "藤先" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))))
 
 (binding [entry-analyzer (analysis/analyzer-mapping
                            (analysis/keyword-analyzer)
@@ -211,8 +330,27 @@
                             :ascii-name (analysis/ngram-analyzer 2 8 [])})]
   (with-state-changes [(before :facts (prepare-store!))
                        (after :facts (finish-store!))]
-    (fact "kuromoji analyzer"
+    (facts "kuromoji analyzer"
       (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤先生" 10) => (results-is-valid? 1 (first entry2))
       (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
       (search-entries "藤先" 10) => (results-is-valid? 0)
       (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))))
+
+(binding [entry-analyzer (analysis/analyzer-mapping
+                           (analysis/keyword-analyzer)
+                           {:doc (analysis/kuromoji-analyzer
+                                   nil
+                                   JapaneseTokenizer$Mode/SEARCH
+                                   (CharArraySet. (map identity "先生") false)
+                                   #{})
+                            :ascii-name (analysis/ngram-analyzer 2 8 [])})]
+  (with-state-changes [(before :facts (prepare-store!))
+                       (after :facts (finish-store!))]
+    (facts "kuromoji analyzer with stop-words"
+      (search-entries "2013" 10) => (results-is-valid? 2 (first entry1))
+      (search-entries "佐藤先生" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "佐藤" 10) => (results-is-valid? 1 (first entry2))
+      (search-entries "藤先" 10) => (results-is-valid? 0)
+      (search-entries "先生" 10) => (results-is-valid? 1 (first entry2)))))
+
