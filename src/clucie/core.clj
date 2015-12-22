@@ -3,8 +3,9 @@
             [clucie.analysis :refer [standard-analyzer]])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.util QueryBuilder]
-           [org.apache.lucene.index IndexReader IndexOptions Term]
-           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc]))
+           [org.apache.lucene.analysis Analyzer]
+           [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
+           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc TopDocs]))
 
 (defn- estimate-value
   [v]
@@ -28,19 +29,19 @@
         (.setTokenized false)))
     field-type))
 
-(defn- add-indexed-field
-  "Add a Field to a Document."
-  [document key value]
-  (let [{:keys [value value-type]} (estimate-value value)]
-    (.add ^Document document
-          (Field. (name key) value (gen-field-type true)))))
 
 (defn- add-field
   "Add a Field to a Document."
-  [document key value]
-  (let [{:keys [value value-type]} (estimate-value value)]
-    (.add ^Document document
-          (Field. (name key) value (gen-field-type false)))))
+  [^Document document key value & [indexed?]]
+  (let [{:keys [^String value value-type]} (estimate-value value)
+        ^String key (name key)
+        field (Field. key value (gen-field-type indexed?))]
+    (.add document field)))
+
+(defn- add-indexed-field
+  "Add a Field to a Document."
+  [^Document document key value]
+  (add-field document key value true))
 
 (defn- map->document
   "Create a Document from a map."
@@ -78,6 +79,7 @@
   ([index-store search-key search-val analyzer]
    (with-open [writer (store/store-writer index-store analyzer)]
      (.deleteDocuments writer
+                       ^"[Lorg.apache.lucene.index.Term;"
                        (into-array [(Term. (name search-key) (str search-val))])))))
 
 (defn- document->map
@@ -87,7 +89,7 @@
              [(keyword (.name f)) (.stringValue f)])))
 
 (defn- query-form->query
-  [query-form builder]
+  [query-form ^QueryBuilder builder]
   (cond
     (vector? query-form) (let [query (BooleanQuery.)]
                            (doseq [q (map #(query-form->query % builder) query-form)]
@@ -111,8 +113,8 @@
           results-per-page (or results-per-page max-results)
           ^IndexSearcher searcher (IndexSearcher. reader)
           builder (QueryBuilder. analyzer)
-          query (query-form->query query-form builder)
-          hits (.search searcher query (int max-results))
+          ^BooleanQuery query (query-form->query query-form builder)
+          ^TopDocs hits (.search searcher query (int max-results))
           start (* page results-per-page)
           end (min (+ start results-per-page) (.totalHits hits) max-results)]
       (vec

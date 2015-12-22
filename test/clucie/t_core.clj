@@ -8,7 +8,8 @@
             [clucie.analysis :as analysis]
             [clucie.store :as store])
   (:import [java.util UUID]
-           [java.io File]))
+           [java.io File]
+           [org.apache.lucene.store NIOFSDirectory Directory]))
 
 (def test-store (atom nil))
 
@@ -89,12 +90,15 @@
       (delete-dir! child)))
   (.delete dir-or-file))
 
+(defn- close-test-store! []
+  (.close ^Directory @test-store))
+
 (defn- finish-store! [& [path]]
   (when @test-store
-    (.close @test-store))
+    (close-test-store!)
     (when path
       (delete-dir! (io/file path)))
-    (reset! test-store nil))
+    (reset! test-store nil)))
 
 (defn- prepare-store! [& [path]]
   (when @test-store
@@ -189,7 +193,7 @@
         (search-entries new-doc 10) => (results-is-valid? 1 new-key)
         ;; Switch to another session
         (do
-          (.close @test-store)
+          (close-test-store!)
           (reset! test-store (store/disk-store tmp-store-path))
           nil) => nil
         (search-entries new-doc 10) => (results-is-valid? 1 new-key)))))

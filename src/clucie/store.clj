@@ -19,10 +19,9 @@
 
 (defn store-writer
   "Create an IndexWriter."
-  ^IndexWriter
-  ([index]
+  (^IndexWriter [index]
    (store-writer index (standard-analyzer)))
-  ([index ^Analyzer analyzer]
+  (^IndexWriter [index ^Analyzer analyzer]
    (IndexWriter. index
                  (IndexWriterConfig. analyzer))))
 

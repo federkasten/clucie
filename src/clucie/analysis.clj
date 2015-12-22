@@ -23,17 +23,15 @@
              (proxy-super setReader reader#)))))))
 
 (defn- char-set
-  ^CharArraySet
-  ([stop-words]
+  (^CharArraySet [stop-words]
    (char-set stop-words false))
-  ([stop-words ignore-case]
+  (^CharArraySet [stop-words ignore-case]
    (CharArraySet. stop-words ignore-case)))
 
 (defn standard-analyzer
-  ^Analyzer
-  ([]
+  (^Analyzer []
    (standard-analyzer []))
-  ([stop-words]
+  (^Analyzer [stop-words]
    (StandardAnalyzer. (char-set stop-words))))
 
 (defn keyword-analyzer
@@ -50,17 +48,15 @@
                   (StopFilter. (char-set stop-words))))
 
 (defn cjk-analyzer
-  ^Analyzer
-  ([]
+  (^Analyzer []
    (CJKAnalyzer.))
-  ([stop-words]
+  (^Analyzer [stop-words]
    (CJKAnalyzer. (char-set stop-words))))
 
 (defn kuromoji-analyzer
-  ^Analyzer
-  ([]
+  (^Analyzer []
    (JapaneseAnalyzer.))
-  ([user-dict mode stop-words stop-tags]
+  (^Analyzer [user-dict mode stop-words stop-tags]
    (JapaneseAnalyzer. user-dict mode stop-words stop-tags)))
 
 (defn- kuromoji-mode [mode]
@@ -72,9 +68,9 @@
     JapaneseTokenizer$Mode/NORMAL))
 
 ;;; TODO: Support to many tokenize options
-(defn- tokenize [^Tokenizer tokenizer text]
+(defn- tokenize [^Tokenizer tokenizer ^String text]
   (.setReader tokenizer (StringReader. text))
-  (let [offset-attr (.addAttribute tokenizer OffsetAttribute)]
+  (let [^OffsetAttribute offset-attr (.addAttribute tokenizer OffsetAttribute)]
     (.reset tokenizer)
     (loop [results nil]
       (if (.incrementToken tokenizer)
