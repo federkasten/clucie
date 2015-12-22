@@ -104,16 +104,18 @@
 
 (defn search
   "Search the supplied index with a query string."
-  ([index-store query-form max-results]
-   (search index-store query-form max-results (standard-analyzer)))
-  ([index-store query-form max-results analyzer]
-   (with-open [reader (store/store-reader index-store)]
-     (let [searcher (IndexSearcher. reader)
-           builder (QueryBuilder. analyzer)
-           query (query-form->query query-form builder)
-           hits (.search searcher query (int max-results))]
-       (doall
-        (vec
-         (for [hit (map (partial aget (.scoreDocs hits))
-                        (range (.totalHits hits)))]
-           (document->map (.doc ^IndexSearcher searcher (.doc ^ScoreDoc hit))))))))))
+  [index-store query-form max-results & [analyzer page results-per-page]]
+  (with-open [reader (store/store-reader index-store)]
+    (let [analyzer (or analyzer (standard-analyzer))
+          page (or page 0)
+          results-per-page (or results-per-page max-results)
+          ^IndexSearcher searcher (IndexSearcher. reader)
+          builder (QueryBuilder. analyzer)
+          query (query-form->query query-form builder)
+          hits (.search searcher query (int max-results))
+          start (* page results-per-page)
+          end (min (+ start results-per-page) (.totalHits hits) max-results)]
+      (vec
+        (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
+                                 (range start end))]
+          (document->map (.doc searcher (.doc hit))))))))

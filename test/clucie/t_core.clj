@@ -61,12 +61,14 @@
                 :key k
                 entry-analyzer))
 
-(defn- search-entries [query-string max-num]
+(defn- search-entries [query-string max-num & [page results-per-page]]
   (core/search @test-store
                [{:doc query-string}
                 {:ascii-name (tidy-ascii-name query-string)}]
                max-num
-               entry-analyzer))
+               entry-analyzer
+               page
+               results-per-page))
 
 (defn get-tmp-dir [& [specific-dir]]
   (loop []
@@ -125,7 +127,20 @@
             entry-doc "テスト"]
         (search-entries entry-doc 10) => (results-is-valid? 0)
         (add-entry! entry-key entry-doc) => nil
-        (search-entries entry-doc 10) => (results-is-valid? 1 entry-key)))))
+        (search-entries entry-doc 10) => (results-is-valid? 1 entry-key)))
+    (fact "search with pagination"
+      (let [doc-prefix "ページング用"]
+        (dotimes [i 105]
+          (let [index (+ i 50000)
+                doc (str doc-prefix index)]
+            (add-entry! (str index) doc)))
+        (search-entries doc-prefix 100 0 10) => (results-is-valid? 10)
+        (search-entries doc-prefix 19 1 10) => (results-is-valid? 9)
+        (search-entries doc-prefix 200 10 10) => (results-is-valid? 5)
+        (search-entries doc-prefix 200 0 200) => (results-is-valid? 105)
+        (search-entries doc-prefix 200 200 200) => (results-is-valid? 0)
+        (search-entries doc-prefix 5 200 5) => (results-is-valid? 0)
+        (search-entries doc-prefix 8 0 200) => (results-is-valid? 8)))))
 
 (with-state-changes [(before :facts (prepare-store!))
                      (after :facts (finish-store!))]
