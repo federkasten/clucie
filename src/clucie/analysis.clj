@@ -29,13 +29,13 @@
    (CharArraySet. stop-words ignore-case)))
 
 (defn standard-analyzer
-  (^Analyzer []
+  (^org.apache.lucene.analysis.Analyzer []
    (standard-analyzer []))
-  (^Analyzer [stop-words]
+  (^org.apache.lucene.analysis.Analyzer [stop-words]
    (StandardAnalyzer. (char-set stop-words))))
 
 (defn keyword-analyzer
-  ^Analyzer
+  ^org.apache.lucene.analysis.Analyzer
   []
   (KeywordAnalyzer.))
 
@@ -48,9 +48,9 @@
                   (StopFilter. (char-set stop-words))))
 
 (defn cjk-analyzer
-  (^Analyzer []
+  (^org.apache.lucene.analysis.Analyzer []
    (CJKAnalyzer.))
-  (^Analyzer [stop-words]
+  (^org.apache.lucene.analysis.Analyzer [stop-words]
    (CJKAnalyzer. (char-set stop-words))))
 
 (defn- kuromoji-mode [mode]
@@ -62,9 +62,9 @@
     JapaneseTokenizer$Mode/NORMAL))
 
 (defn kuromoji-analyzer
-  (^Analyzer []
+  (^org.apache.lucene.analysis.Analyzer []
    (JapaneseAnalyzer.))
-  (^Analyzer [user-dict mode stop-words stop-tags]
+  (^org.apache.lucene.analysis.Analyzer [user-dict mode stop-words stop-tags]
    (let [mode (kuromoji-mode mode)]
      (JapaneseAnalyzer. user-dict mode stop-words stop-tags))))
 
@@ -96,7 +96,7 @@
     r))
 
 (defn analyzer-mapping
-  ^Analyzer
+  ^org.apache.lucene.analysis.Analyzer
   [default mapping]
   (PerFieldAnalyzerWrapper. default
                             (into {} (map (fn [[k v]] [(name k) v]) mapping))))

@@ -3,7 +3,6 @@
             [clucie.analysis :refer [standard-analyzer]])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.util QueryBuilder]
-           [org.apache.lucene.analysis Analyzer]
            [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
            [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc TopDocs]))
 
