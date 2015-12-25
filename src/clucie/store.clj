@@ -26,3 +26,8 @@
   "Create an IndexReader."
   ^IndexReader [index]
   (DirectoryReader/open ^Directory index))
+
+(defn close!
+  "Close an index."
+  [^Directory index]
+  (.close index))

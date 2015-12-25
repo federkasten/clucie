@@ -94,7 +94,7 @@
   (.delete dir-or-file))
 
 (defn- close-test-store! []
-  (.close ^Directory @test-store))
+  (store/close! @test-store))
 
 (defn- finish-store! [& [path]]
   (when @test-store
