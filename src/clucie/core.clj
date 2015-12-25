@@ -14,6 +14,15 @@
     (keyword? v) {:value (name v) :value-type :keyword}
     :else {:value (str v) :value-type :unknown}))
 
+(defn- stringify-value
+  ^String
+  [v]
+  (cond
+    (string? v) v
+    (integer? v) (str v)
+    (keyword? v) (name v)
+    :else (str v)))
+
 (defn- gen-field-type
   ^FieldType
   [indexed?]
@@ -61,7 +70,7 @@
   ([index-store m keys search-key search-val analyzer]
    (with-open [writer (store/store-writer index-store analyzer)]
      (.updateDocument writer
-                      (Term. (name search-key) (str search-val))
+                      (Term. (name search-key) (stringify-value search-val))
                       (map->document m (set keys))))))
 
 (defn delete!
@@ -71,7 +80,7 @@
    (with-open [writer (store/store-writer index-store analyzer)]
      (.deleteDocuments writer
                        ^"[Lorg.apache.lucene.index.Term;"
-                       (into-array [(Term. (name search-key) (str search-val))])))))
+                       (into-array [(Term. (name search-key) (stringify-value search-val))])))))
 
 (defn- document->map
   "Turn a Document object into a map."

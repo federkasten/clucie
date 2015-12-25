@@ -65,6 +65,10 @@
                 :key k
                 entry-analyzer))
 
+(defn- delete-all-test-entries! []
+  (doseq [k (map first all-entries)]
+    (delete-entry! k)))
+
 (defn- search-entries [query-string max-num & [page results-per-page]]
   (core/search @test-store
                [{:doc query-string}
@@ -138,21 +142,34 @@
         (add-entry! entry-key entry-doc) => nil
         (search-entries entry-doc 10) => (results-is-valid? 1 entry-key)))
     (fact "search new entries with non-string keys"
-      (let [entry-key 34567
-            entry-doc "34567"]
+      (delete-all-test-entries!)
+      (let [entry-key 55
+            entry-doc (str entry-key)]
         (search-entries entry-doc 10) => (results-is-valid? 0)
-        (add-entry! entry-key entry-doc) => nil
-        (search-entries entry-doc 10) => (results-is-valid? 1 (str entry-key)))
+        (add-entry! entry-key "") => nil
+        (search-entries entry-doc 10) => (results-is-valid? 0)
+        (update-entry! entry-key entry-doc) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 1 (str entry-key))
+        (delete-entry! entry-key) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 0))
       (let [entry-key :test
-            entry-doc ":test"]
+            entry-doc (name entry-key)]
         (search-entries entry-doc 10) => (results-is-valid? 0)
-        (add-entry! entry-key entry-doc) => nil
-        (search-entries entry-doc 10) => (results-is-valid? 1 (name entry-key)))
+        (add-entry! entry-key "") => nil
+        (search-entries entry-doc 10) => (results-is-valid? 0)
+        (update-entry! entry-key entry-doc) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 1 (name entry-key))
+        (delete-entry! entry-key) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 0))
       (let [entry-key (java.util.UUID/randomUUID)
-            entry-doc "random"]
+            entry-doc (str entry-key)]
         (search-entries entry-doc 10) => (results-is-valid? 0)
-        (add-entry! entry-key entry-doc) => nil
-        (search-entries entry-doc 10) => (results-is-valid? 1 (str entry-key))))
+        (add-entry! entry-key "") => nil
+        (search-entries entry-doc 10) => (results-is-valid? 0)
+        (update-entry! entry-key entry-doc) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 1 (str entry-key))
+        (delete-entry! entry-key) => nil
+        (search-entries entry-doc 10) => (results-is-valid? 0)))
     (fact "search with pagination"
       (let [doc-prefix "ページング用"]
         (dotimes [i 105]
