@@ -65,10 +65,13 @@
   (^org.apache.lucene.analysis.Analyzer []
    (JapaneseAnalyzer.))
   (^org.apache.lucene.analysis.Analyzer [user-dict mode stop-words stop-tags]
-   (let [mode (kuromoji-mode mode)]
+   (let [mode (kuromoji-mode mode)
+         ^CharArraySet stop-words (if (instance? CharArraySet stop-words)
+                                    stop-words
+                                    (CharArraySet. stop-words false))]
      (JapaneseAnalyzer. user-dict mode stop-words stop-tags))))
 
-;;; TODO: Support to many tokenize options
+;;; TODO: Support to many tokenize options for morphological analyses
 (defn- tokenize [^Tokenizer tokenizer ^String text]
   (.setReader tokenizer (StringReader. text))
   (let [^OffsetAttribute offset-attr (.addAttribute tokenizer OffsetAttribute)]
@@ -82,12 +85,12 @@
           (.end tokenizer)
           (reverse results))))))
 
-(defn- kuromoji-tokenizer [& [user-dict discard-puctuation? mode factory]]
-  (let [discard-puctuation? (boolean discard-puctuation?)
+(defn- kuromoji-tokenizer [& [user-dict discard-punctuation? mode factory]]
+  (let [discard-punctuation? (boolean discard-punctuation?)
         mode (kuromoji-mode mode)]
     (if factory
-      (JapaneseTokenizer. factory user-dict discard-puctuation? mode)
-      (JapaneseTokenizer. user-dict discard-puctuation? mode))))
+      (JapaneseTokenizer. factory user-dict discard-punctuation? mode)
+      (JapaneseTokenizer. user-dict discard-punctuation? mode))))
 
 (defn kuromoji-tokenize [text & tokenizer-args]
   (let [^Tokenizer t (apply kuromoji-tokenizer tokenizer-args)
