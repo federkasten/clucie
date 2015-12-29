@@ -8,6 +8,12 @@ Clojure for the Lucene
 
 # Usage
 
+Add the following dependency to your `project.clj`:
+
+[![Clojars Project](http://clojars.org/clucie/latest-version.svg)](http://clojars.org/clucie)
+
+## Simple Usage
+
 ```clojure
 (require '[clucie.core :as core])
 (require '[clucie.analysis :as analysis])

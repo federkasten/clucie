@@ -1,4 +1,4 @@
-(defproject clucie "0.1.0-SNAPSHOT"
+(defproject clucie "0.1.0"
   :description "Clojure for the Lucene"
   :url "https://github.com/federkasten/clucie"
   :min-lein-version "2.5.0"
