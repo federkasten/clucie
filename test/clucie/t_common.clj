@@ -12,7 +12,6 @@
 (def test-store (atom nil))
 (def doc-analyzer (atom nil))
 
-
 (def standard-analyzer (analysis/standard-analyzer))
 (def cjk-analyzer (analysis/cjk-analyzer))
 (def kuromoji-analyzer (analysis/kuromoji-analyzer))
@@ -101,4 +100,3 @@
         (= quantity (count results))
         (boolean (first (filter #(= entry-key (:key %))
                                 results)))))))
-
