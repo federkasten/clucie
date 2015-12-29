@@ -10,7 +10,7 @@
             [lein-midje "3.2"]]
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
-  :profiles {:dev {:dependencies [[midje "1.8.2"]]
+  :profiles {:dev {:dependencies [[midje "1.8.3"]]
                    ;; :global-vars {*warn-on-reflection* true
                    ;;               *assert* true}
                    }
