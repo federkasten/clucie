@@ -19,15 +19,15 @@
 
 (defn store-writer
   "Create an IndexWriter."
-  ^IndexWriter
-  ([index]
-   (store-writer index (standard-analyzer)))
-  ([index ^Analyzer analyzer]
-   (IndexWriter. index
-                 (IndexWriterConfig. analyzer))))
+  ^IndexWriter [index ^Analyzer analyzer]
+  (IndexWriter. index (IndexWriterConfig. analyzer)))
 
 (defn store-reader
   "Create an IndexReader."
-  ^IndexReader
-  [index]
+  ^IndexReader [index]
   (DirectoryReader/open ^Directory index))
+
+(defn close!
+  "Close an index."
+  [^Directory index]
+  (.close index))
