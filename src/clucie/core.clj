@@ -37,7 +37,6 @@
         (.setTokenized false)))
     field-type))
 
-
 (defn- add-field
   "Add a Field to a Document."
   [^Document document key value & [indexed?]]
