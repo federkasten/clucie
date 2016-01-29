@@ -10,7 +10,9 @@ Clojure for the Lucene
 
 Add the following dependency to your `project.clj`:
 
-[![Clojars Project](http://clojars.org/clucie/latest-version.svg)](http://clojars.org/clucie)
+```
+[clucie "0.1.1"]
+```
 
 ## Simple Usage
 
