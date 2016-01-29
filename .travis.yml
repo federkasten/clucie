@@ -4,4 +4,10 @@ jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
-script: lein2 midje
+env:
+  matrix:
+    - VERSION='1.5'
+    - VERSION='1.6'
+    - VERSION='1.7'
+    - VERSION='1.8'
+script: lein2 with-profile dev,$VERSION midje
