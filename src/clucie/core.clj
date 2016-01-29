@@ -88,20 +88,25 @@
              [(keyword (.name f)) (.stringValue f)])))
 
 (defn- query-form->query
-  [query-form ^QueryBuilder builder]
+  [query-form ^QueryBuilder builder & {:keys [current-key]
+                                       :or {current-key nil}}]
   (cond
-    (vector? query-form) (let [query (BooleanQuery.)]
-                           (doseq [q (map #(query-form->query % builder) query-form)]
-                             (.add query q BooleanClause$Occur/SHOULD))
-                           query)
+    (sequential? query-form) (let [query (BooleanQuery.)]
+                               (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
+                                 (.add query q BooleanClause$Occur/MUST))
+                               query)
+    (set? query-form) (let [query (BooleanQuery.)]
+                        (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
+                          (.add query q BooleanClause$Occur/SHOULD))
+                        query)
     (map? query-form) (let [query (BooleanQuery.)]
-                        (doseq [q (->>  query-form
-                                        (map (fn [[k v]]
-                                               (when-not (empty? (str v))
-                                                 (.createBooleanQuery builder (name k) (str v)))))
-                                        (filter #(not (nil? %))))]
+                        (doseq [q (->> query-form
+                                       (map (fn [[k v]]
+                                              (query-form->query v builder :current-key k)))
+                                       (filter identity))]
                           (.add query q BooleanClause$Occur/MUST))
-                        query)))
+                        query)
+    (string? query-form) (.createBooleanQuery builder (name current-key) query-form)))
 
 (defn search
   "Search the supplied index with a query string."

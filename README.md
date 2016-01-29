@@ -34,11 +34,27 @@ Add the following dependency to your `project.clj`:
            analyzer)
 
 (core/search index-store
-             [{:title "Beatles"}]
+             {:title "Beatles"}
              10 ; max-num
              analyzer
              0
              5) ; => [{:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
+
+;; AND search
+(core/search index-store
+             {:title ["Beatles" "Sale"]}
+             10
+             analyzer
+             0
+             5) ; => [{:number "4", :title "Beatles for Sale"}]
+
+;; OR search
+(core/search index-store
+             {:title #{"Beatles" "Please"}}
+             10
+             analyzer
+             0
+             5) ; => [{:number "1", :title "Please Please Me"} {:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
 
 (store/close! index-store)
 ```
