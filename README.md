@@ -13,7 +13,7 @@ Clojure for the Lucene
 Add the following dependency to your `project.clj`:
 
 ```
-[clucie "0.1.1"]
+[clucie "0.1.2"]
 ```
 
 ## Simple Usage
