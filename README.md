@@ -6,6 +6,8 @@ Clojure for the Lucene
 
 [![Dependency Status](https://www.versioneye.com/user/projects/568202c5eb4f47003c0009b3/badge.svg?style=flat)](https://www.versioneye.com/user/projects/568202c5eb4f47003c0009b3)
 
+[![Clojars Project](https://img.shields.io/clojars/v/clucie.svg)](https://clojars.org/clucie)
+
 # Usage
 
 Add the following dependency to your `project.clj`:
