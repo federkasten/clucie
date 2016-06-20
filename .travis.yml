@@ -2,12 +2,13 @@ language: clojure
 lein: lein2
 jdk:
   - oraclejdk8
-  - oraclejdk7
-  - openjdk7
+  # - oraclejdk7
+  # - openjdk7
 env:
   matrix:
     - VERSION='1.5'
     - VERSION='1.6'
     - VERSION='1.7'
     - VERSION='1.8'
+    - VERSION='1.9'
 script: lein2 with-profile dev,$VERSION midje
