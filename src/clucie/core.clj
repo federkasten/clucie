@@ -91,21 +91,21 @@
   [query-form ^QueryBuilder builder & {:keys [current-key]
                                        :or {current-key nil}}]
   (cond
-    (sequential? query-form) (let [query (BooleanQuery.)]
+    (sequential? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                                (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
-                                 (.add query q BooleanClause$Occur/MUST))
-                               query)
-    (set? query-form) (let [query (BooleanQuery.)]
+                                 (.add qb q BooleanClause$Occur/MUST))
+                               (.build qb))
+    (set? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                         (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
-                          (.add query q BooleanClause$Occur/SHOULD))
-                        query)
-    (map? query-form) (let [query (BooleanQuery.)]
+                          (.add qb q BooleanClause$Occur/SHOULD))
+                        (.build qb))
+    (map? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                         (doseq [q (->> query-form
                                        (map (fn [[k v]]
                                               (query-form->query v builder :current-key k)))
                                        (filter identity))]
-                          (.add query q BooleanClause$Occur/MUST))
-                        query)
+                          (.add qb q BooleanClause$Occur/MUST))
+                        (.build qb))
     (string? query-form) (.createBooleanQuery builder (name current-key) query-form)))
 
 (defn search
