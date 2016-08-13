@@ -26,6 +26,7 @@
   (with-state-changes [(before :facts (t-common/prepare! t-common/ngram-analyzer nil t-fixture/entries-en-1))
                        (after :facts (t-common/finish!))]
     (fact "search exists entries"
+      (t-common/search-entries "A" 10) => empty?
       (t-common/search-entries t-fixture/entries-en-1-search-1 10) => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [0 0]))
       (t-common/search-entries t-fixture/entries-en-1-search-2 10) => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [0 0]))
       (t-common/search-entries t-fixture/entries-en-1-search-3 10) => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [1 0]))
