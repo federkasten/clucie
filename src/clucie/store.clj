@@ -31,3 +31,7 @@
   "Close an index."
   [^Directory index]
   (.close index))
+
+(defn valid-store?
+  [^Directory index]
+  (DirectoryReader/indexExists index))
