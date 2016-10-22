@@ -10,12 +10,6 @@ Clojure for the Lucene
 
 # Usage
 
-Add the following dependency to your `project.clj`:
-
-```
-[clucie "0.1.3"]
-```
-
 ## Simple Usage
 
 ```clojure
