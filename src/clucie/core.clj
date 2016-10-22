@@ -70,7 +70,8 @@
    (with-open [writer (store/store-writer index-store analyzer)]
      (.updateDocument writer
                       (Term. (name search-key) (stringify-value search-val))
-                      (map->document m (set keys))))))
+                      (map->document m (set keys)))
+     nil)))
 
 (defn delete!
   ([index-store search-key search-val]
@@ -79,7 +80,8 @@
    (with-open [writer (store/store-writer index-store analyzer)]
      (.deleteDocuments writer
                        ^"[Lorg.apache.lucene.index.Term;"
-                       (into-array [(Term. (name search-key) (stringify-value search-val))])))))
+                       (into-array [(Term. (name search-key) (stringify-value search-val))]))
+     nil)))
 
 (defn- document->map
   "Turn a Document object into a map."
