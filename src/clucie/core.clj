@@ -100,7 +100,8 @@
                                (.build qb))
     (set? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                         (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
-                          (.add qb q BooleanClause$Occur/SHOULD))
+                          (when q
+                            (.add qb q BooleanClause$Occur/SHOULD)))
                         (.build qb))
     (map? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                         (doseq [q (->> query-form
