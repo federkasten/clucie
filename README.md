@@ -35,6 +35,7 @@ Clojure for the Lucene
              analyzer
              0 ; page
              5) ; max-num-per-page
+
 ;; => [{:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
 
 ;; AND search
