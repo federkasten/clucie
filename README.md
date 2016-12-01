@@ -33,8 +33,9 @@ Clojure for the Lucene
              {:title "Beatles"}
              10 ; max-num
              analyzer
-             0
-             5) ; => [{:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
+             0 ; page
+             5) ; max-num-per-page
+;; => [{:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
 
 ;; AND search
 (core/search index-store
@@ -42,7 +43,9 @@ Clojure for the Lucene
              10
              analyzer
              0
-             5) ; => [{:number "4", :title "Beatles for Sale"}]
+             5)
+
+;; => [{:number "4", :title "Beatles for Sale"}]
 
 ;; OR search
 (core/search index-store
@@ -50,7 +53,9 @@ Clojure for the Lucene
              10
              analyzer
              0
-             5) ; => [{:number "1", :title "Please Please Me"} {:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
+             5)
+
+;; => [{:number "1", :title "Please Please Me"} {:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
 
 (store/close! index-store)
 ```
