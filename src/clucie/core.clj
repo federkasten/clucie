@@ -128,4 +128,6 @@
       (vec
         (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
                                  (range start end))]
-          (document->map (.doc searcher (.doc hit))))))))
+          (let [m (document->map (.doc searcher (.doc hit)))
+                score (.score hit)]
+            (with-meta m {:score score})))))))

@@ -58,6 +58,17 @@ Clojure for the Lucene
 
 ;; => [{:number "1", :title "Please Please Me"} {:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
 
+;; Get score
+(let [results (core/search index-store
+                           {:title #{"Beatles" "Please"}}
+                           10
+                           analyzer
+                           0
+                           5)]
+  (map #(:score (meta %)) results))
+
+;; => (0.62241787 0.3930676 0.3930676)
+
 (store/close! index-store)
 ```
 

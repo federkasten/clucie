@@ -92,10 +92,15 @@
     (reset! test-store store)
     (add-entries! (apply concat target-entries))))
 
+(defn all-results-has-score? [results]
+  (doseq [r results]
+    (assert (number? (:score (meta r))))))
+
 (defn results-is-valid? [quantity & [entry-key]]
-  (if (or (zero? quantity) (not entry-key))
-    #(= quantity (count %))
-    (fn [results]
+  (fn [results]
+    (all-results-has-score? results)
+    (if (or (zero? quantity) (not entry-key))
+      (= quantity (count results))
       (and
         (= quantity (count results))
         (boolean (first (filter #(= entry-key (:key %))
