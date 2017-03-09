@@ -4,7 +4,7 @@
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.util QueryBuilder]
            [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
-           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query ScoreDoc TopDocs]))
+           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query PhraseQuery PhraseQuery$Builder WildcardQuery ScoreDoc TopDocs]))
 
 (defn- estimate-value
   [v]
@@ -30,7 +30,7 @@
                      (.setStored true))]
     (if indexed?
       (doto field-type
-        (.setIndexOptions IndexOptions/DOCS)
+        (.setIndexOptions IndexOptions/DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS)
         (.setTokenized true))
       (doto field-type
         (.setIndexOptions IndexOptions/NONE)
@@ -90,38 +90,41 @@
              [(keyword (.name f)) (.stringValue f)])))
 
 (defn- query-form->query
-  [query-form ^QueryBuilder builder & {:keys [current-key]
+  [mode query-form ^QueryBuilder builder & {:keys [current-key]
                                        :or {current-key nil}}]
   (cond
     (sequential? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
-                               (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
+                               (doseq [q (map #(query-form->query mode % builder :current-key current-key) query-form)]
                                  (when q
                                    (.add qb q BooleanClause$Occur/MUST)))
                                (.build qb))
     (set? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
-                        (doseq [q (map #(query-form->query % builder :current-key current-key) query-form)]
+                        (doseq [q (map #(query-form->query mode % builder :current-key current-key) query-form)]
                           (when q
                             (.add qb q BooleanClause$Occur/SHOULD)))
                         (.build qb))
     (map? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                         (doseq [q (->> query-form
                                        (map (fn [[k v]]
-                                              (query-form->query v builder :current-key k)))
+                                              (query-form->query mode v builder :current-key k)))
                                        (filter identity))]
                           (.add qb q BooleanClause$Occur/MUST))
                         (.build qb))
-    (string? query-form) (.createBooleanQuery builder (name current-key) query-form)))
+    (string? query-form) (case mode
+                           :query (.createBooleanQuery builder (name current-key) query-form)
+                           :phrase-query (.createPhraseQuery builder (name current-key) query-form)
+                           :wildcard-query (WildcardQuery. (Term. (name current-key) (str query-form)))
+                           (throw (ex-info "invalid mode" {:mode mode})))))
 
-(defn search
-  "Search the supplied index with a query string."
-  [index-store query-form max-results & [analyzer page results-per-page]]
+(defn- search*
+  [mode index-store query-form max-results analyzer page results-per-page]
   (with-open [reader (store/store-reader index-store)]
     (let [analyzer (or analyzer (standard-analyzer))
           page (or page 0)
           results-per-page (or results-per-page max-results)
           ^IndexSearcher searcher (IndexSearcher. reader)
           builder (QueryBuilder. analyzer)
-          ^BooleanQuery query (query-form->query query-form builder)
+          ^BooleanQuery query (query-form->query mode query-form builder)
           ^TopDocs hits (.search searcher query (int max-results))
           start (* page results-per-page)
           end (min (+ start results-per-page) (.totalHits hits) max-results)]
@@ -131,3 +134,18 @@
           (let [m (document->map (.doc searcher (.doc hit)))
                 score (.score hit)]
             (with-meta m {:score score})))))))
+
+(defn search
+  "Search the supplied index with a query string."
+  [index-store query-form max-results & [analyzer page results-per-page]]
+  (search* :query index-store query-form max-results analyzer page results-per-page))
+
+(defn phrase-search
+  "Phrase-search the supplied index with a query string."
+  [index-store query-form max-results & [analyzer page results-per-page]]
+  (search* :phrase-query index-store query-form max-results analyzer page results-per-page))
+
+(defn wildcard-search
+  "Wildcard-search the supplied index with a query string."
+  [index-store query-form max-results & [analyzer page results-per-page]]
+  (search* :wildcard-query index-store query-form max-results analyzer page results-per-page))

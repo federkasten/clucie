@@ -38,6 +38,25 @@ Clojure for the Lucene
 
 ;; => [{:number "2", :title "With the Beatles"} {:number "4", :title "Beatles for Sale"}]
 
+;; Phrase search
+(core/phrase-search index-store
+                    {:title "beatles for"}
+                    10
+                    analyzer
+                    0
+                    5)
+
+;; => [{:number "4", :title "Beatles for Sale"}]
+
+(core/phrase-search index-store
+                    {:title "for beatles"}
+                    10
+                    analyzer
+                    0
+                    5)
+
+;; => []
+
 ;; AND search
 (core/search index-store
              {:title ["Beatles" "Sale"]}

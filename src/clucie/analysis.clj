@@ -3,7 +3,7 @@
            [org.apache.lucene.analysis.core KeywordAnalyzer LowerCaseFilter StopFilter]
            [org.apache.lucene.analysis.util CharArraySet]
            [org.apache.lucene.analysis.cjk CJKAnalyzer]
-           [org.apache.lucene.analysis.ngram NGramTokenFilter]
+           [org.apache.lucene.analysis.ngram NGramTokenizer NGramTokenFilter]
            [org.apache.lucene.analysis.ja JapaneseAnalyzer JapaneseTokenizer JapaneseTokenizer$Mode]
            [org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents]
            [org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper]
@@ -41,9 +41,9 @@
 
 (defn ngram-analyzer
   [min-length max-length stop-words]
-  (build-analyzer (StandardTokenizer.)
+  (build-analyzer (NGramTokenizer. min-length max-length)
                   (NGramTokenFilter. min-length max-length)
-                  (StandardFilter.)
+                  ;; (StandardFilter.) ; is it necessary?
                   (LowerCaseFilter.)
                   (StopFilter. (char-set stop-words))))
 

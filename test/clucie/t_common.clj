@@ -12,6 +12,7 @@
 (def test-store (atom nil))
 (def doc-analyzer (atom nil))
 
+(def keyword-analyzer (analysis/keyword-analyzer))
 (def standard-analyzer (analysis/standard-analyzer))
 (def cjk-analyzer (analysis/cjk-analyzer))
 (def kuromoji-analyzer (analysis/kuromoji-analyzer))
@@ -52,6 +53,22 @@
                @doc-analyzer
                page
                results-per-page))
+
+(defn phrase-search-entries [query-string max-num & [page results-per-page]]
+  (core/phrase-search @test-store
+                      [{:doc query-string}]
+                      max-num
+                      @doc-analyzer
+                      page
+                      results-per-page))
+
+(defn wildcard-search-entries [query-string max-num & [page results-per-page]]
+  (core/wildcard-search @test-store
+                        [{:doc query-string}]
+                        max-num
+                        @doc-analyzer
+                        page
+                        results-per-page))
 
 (defn get-tmp-dir [& [specific-dir]]
   (loop []
