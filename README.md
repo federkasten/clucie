@@ -81,7 +81,7 @@ To delete index,
 (def cjk-analyzer (analysis/cjk-analyzer))
 
 (def my-analyzer (analysis/analyzer-mapping (analysis/keyword-analyzer)
-                                            {:content clj-analyzer}))
+                                            {:content cjk-analyzer}))
 
 (core/add! index-store
            [{:key "English" :content "Thank you"}
@@ -89,7 +89,7 @@ To delete index,
             {:key "Japanese" :content "ありがとう"}
             {:key "Korean" :content "고마워요"}]
            [:key :content]
-           analyzer)
+           my-analyzer)
 ```
 
 ## Japanese Support (Kuromoji)
