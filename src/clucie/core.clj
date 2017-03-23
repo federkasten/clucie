@@ -1,6 +1,7 @@
 (ns clucie.core
   (:require [clucie.store :as store]
-            [clucie.analysis :refer [standard-analyzer]])
+            [clucie.analysis :refer [standard-analyzer]]
+            [clucie.queryparser :as qp])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.util QueryBuilder]
            [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
@@ -113,7 +114,10 @@
     (string? query-form) (case mode
                            :query (.createBooleanQuery builder (name current-key) query-form)
                            :phrase-query (.createPhraseQuery builder (name current-key) query-form)
-                           :wildcard-query (WildcardQuery. (Term. (name current-key) (str query-form)))
+                           :wildcard-query (WildcardQuery. (Term. (name current-key) query-form))
+                           :qp-query (qp/parse-query (.getAnalyzer builder)
+                                                     (name current-key)
+                                                     query-form)
                            (throw (ex-info "invalid mode" {:mode mode})))))
 
 (defn- search*
@@ -124,7 +128,7 @@
           results-per-page (or results-per-page max-results)
           ^IndexSearcher searcher (IndexSearcher. reader)
           builder (QueryBuilder. analyzer)
-          ^BooleanQuery query (query-form->query mode query-form builder)
+          ^Query query (query-form->query mode query-form builder)
           ^TopDocs hits (.search searcher query (int max-results))
           start (* page results-per-page)
           end (min (+ start results-per-page) (.totalHits hits) max-results)]
@@ -141,11 +145,18 @@
   (search* :query index-store query-form max-results analyzer page results-per-page))
 
 (defn phrase-search
-  "Phrase-search the supplied index with a query string."
+  "Search the supplied index with a pharse query string."
   [index-store query-form max-results & [analyzer page results-per-page]]
   (search* :phrase-query index-store query-form max-results analyzer page results-per-page))
 
 (defn wildcard-search
-  "Wildcard-search the supplied index with a query string."
+  "Search the supplied index with a wildcard query string."
   [index-store query-form max-results & [analyzer page results-per-page]]
   (search* :wildcard-query index-store query-form max-results analyzer page results-per-page))
+
+(defn qp-search
+  "Search the supplied index with a classic-queryparser query string.
+  NB: This may throw org.apache.lucene.queryparser.classic.ParseException
+  by invalid query string."
+  [index-store query-form max-results & [analyzer page results-per-page]]
+  (search* :qp-query index-store query-form max-results analyzer page results-per-page))
