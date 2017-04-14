@@ -11,6 +11,12 @@
 (def entries-en-1-search-2 "2013")
 (def entries-en-1-search-3 "hello")
 (def entries-en-1-search-4 "lo")
+(def entries-en-1-search-5 "ton")
+
+(def entries-en-1-search-wildcard-1 "20130819")
+(def entries-en-1-search-wildcard-2 "2013*")
+(def entries-en-1-search-wildcard-3 "hello")
+(def entries-en-1-search-wildcard-4 "*lo*")
 
 (def entries-ja-1
   [["11" "20130819"]
@@ -23,6 +29,7 @@
 (def entries-ja-1-search-2 "東京")
 (def entries-ja-1-search-3 "京都")
 (def entries-ja-1-search-4 "都庁")
+(def entries-ja-1-search-5 "にち")
 
 (def tokenize-wo-optargs-text "東京都庁")
 (def tokenize-wo-optargs-result ["東京" "都庁"])
