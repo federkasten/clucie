@@ -65,6 +65,25 @@ Clojure for the Lucene
 
 ;; => [{:number "4", :title "Beatles for Sale"}]
 
+;; AND search, across multiple keys
+(core/search index-store
+             [{:number "4"} {:title ["Beatles" "Sale"]}]
+             10
+             analyzer
+             0
+             5)
+
+;; => [{:number "4", :title "Beatles for Sale"}]
+
+(core/search index-store
+             [{:number "3"} {:title "Beatles"}]
+             10
+             analyzer
+             0
+             5)
+
+;; => []
+
 ;; OR search
 (core/search index-store
              {:title #{"Beatles" "Please"}}
