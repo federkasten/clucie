@@ -7,6 +7,29 @@
             [clucie.t-fixture :as t-fixture])
   (:import [java.util UUID]))
 
+(defmacro run-testset! [testset-symbol]
+  (let [testset (eval testset-symbol)
+        label (str (:testname testset) " : " (:testdesc testset))
+        tests (map (fn [[query result]]
+                     `(fact ~(str ": query = " query)
+                        (try
+                          (set (map :key
+                                    (~'search-fn @t-common/test-store
+                                                 [{:doc ~query}]
+                                                 10
+                                                 @t-common/doc-analyzer)))
+                          ;; for check exception
+                          (catch Throwable e# (type e#)))
+                        => ~result))
+                   (seq (:query+result testset)))]
+    `(let [testset# ~testset-symbol
+           ~'search-fn (:search-fn testset#)]
+       (t-common/prepare! (:analyzer testset#)
+                          nil
+                          (:dataset testset#))
+       (facts ~label ~@tests)
+       (t-common/finish!))))
+
 (facts "keyword analyzer with wildcard search"
   (with-state-changes [(before :facts (t-common/prepare! t-common/keyword-analyzer nil t-fixture/entries-en-1))
                        (after :facts (t-common/finish!))]
@@ -252,6 +275,22 @@
         (t-common/search-entries doc-prefix 200 200 200) => (t-common/results-is-valid? 0)
         (t-common/search-entries doc-prefix 5 200 5) => (t-common/results-is-valid? 0)
         (t-common/search-entries doc-prefix 8 0 200) => (t-common/results-is-valid? 8)))))
+
+(run-testset! t-fixture/testset-kw-s)
+(run-testset! t-fixture/testset-kw-w)
+(run-testset! t-fixture/testset-kw-q)
+(run-testset! t-fixture/testset-std-s)
+(run-testset! t-fixture/testset-std-p)
+(run-testset! t-fixture/testset-std-q)
+(run-testset! t-fixture/testset-cjk-s)
+(run-testset! t-fixture/testset-cjk-p)
+(run-testset! t-fixture/testset-cjk-q)
+(run-testset! t-fixture/testset-kuro-s)
+(run-testset! t-fixture/testset-kuro-p)
+(run-testset! t-fixture/testset-kuro-q)
+(run-testset! t-fixture/testset-ngram-s)
+(run-testset! t-fixture/testset-ngram-p)
+(run-testset! t-fixture/testset-ngram-q)
 
 (facts "abnormal usage"
   (with-state-changes [(before :facts (t-common/prepare! nil nil t-fixture/entries-en-1))
