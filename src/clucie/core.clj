@@ -114,7 +114,7 @@
     (string? query-form) (case mode
                            :query (.createBooleanQuery builder (name current-key) query-form)
                            :phrase-query (.createPhraseQuery builder (name current-key) query-form)
-                           :wildcard-query (WildcardQuery. (Term. (name current-key) query-form))
+                           :wildcard-query (WildcardQuery. (Term. (name current-key) ^String query-form))
                            :qp-query (qp/parse-query (.getAnalyzer builder)
                                                      (name current-key)
                                                      query-form)

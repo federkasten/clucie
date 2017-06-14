@@ -1,31 +1,28 @@
 (ns clucie.analysis
   (:import [org.apache.lucene.analysis.standard StandardAnalyzer StandardTokenizer StandardFilter]
            [org.apache.lucene.analysis.core KeywordAnalyzer LowerCaseFilter StopFilter]
-           [org.apache.lucene.analysis.util CharArraySet]
            [org.apache.lucene.analysis.cjk CJKAnalyzer]
            [org.apache.lucene.analysis.ngram NGramTokenizer NGramTokenFilter]
            [org.apache.lucene.analysis.ja JapaneseAnalyzer JapaneseTokenizer JapaneseTokenizer$Mode]
            [org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents]
            [org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper]
            [org.apache.lucene.analysis.tokenattributes OffsetAttribute]
-           [org.apache.lucene.analysis Tokenizer]
+           [org.apache.lucene.analysis CharArraySet Tokenizer]
            [java.io StringReader]))
 
 (defmacro build-analyzer
   [tokenizer & filters]
-  `(proxy [org.apache.lucene.analysis.Analyzer] []
+  `(proxy [Analyzer] []
      (createComponents [field-name#]
        (let [src# ~tokenizer
              token# (-> src#
                         ~@filters)]
-         (proxy [org.apache.lucene.analysis.Analyzer$TokenStreamComponents] [src# token#]
-           (setReader [reader#]
-             (proxy-super setReader reader#)))))))
+         (Analyzer$TokenStreamComponents. src# token#)))))
 
 (defn- char-set
   (^CharArraySet [stop-words]
    (char-set stop-words false))
-  (^CharArraySet [stop-words ignore-case]
+  (^CharArraySet [^java.util.Collection stop-words ^Boolean ignore-case]
    (CharArraySet. stop-words ignore-case)))
 
 (defn standard-analyzer
@@ -68,7 +65,7 @@
    (let [mode (kuromoji-mode mode)
          ^CharArraySet stop-words (if (instance? CharArraySet stop-words)
                                     stop-words
-                                    (CharArraySet. stop-words false))]
+                                    (char-set stop-words false))]
      (JapaneseAnalyzer. user-dict mode stop-words stop-tags))))
 
 ;;; TODO: Support to many tokenize options for morphological analyses
