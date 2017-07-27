@@ -5,7 +5,8 @@
             [clucie.store :as store]
             [clucie.t-common :as t-common]
             [clucie.t-fixture :as t-fixture])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]))
 
 (defmacro run-testset! [testset-symbol]
   (let [testset (eval testset-symbol)
@@ -291,6 +292,20 @@
 (run-testset! t-fixture/testset-ngram-s)
 (run-testset! t-fixture/testset-ngram-p)
 (run-testset! t-fixture/testset-ngram-q)
+
+(with-state-changes [(before :facts (t-common/prepare! t-common/standard-analyzer
+                                                       nil
+                                                       t-fixture/entries-en-1))
+                     (after :facts (t-common/finish!))]
+  (letfn [(parse-query [^String s]
+            (.parse (StandardQueryParser. t-common/standard-analyzer) s "doc"))]
+    (fact "raw query search"
+      (core/search @t-common/test-store (parse-query "doc:20130819") 10)
+      => (t-common/results-is-valid? 1)
+      (core/search @t-common/test-store (parse-query "Hello Tokyo") 10)
+      => (t-common/results-is-valid? 2)
+      (core/search @t-common/test-store (parse-query "Hello AND Tokyo") 10)
+      => (t-common/results-is-valid? 0))))
 
 (facts "abnormal usage"
   (with-state-changes [(before :facts (t-common/prepare! nil nil t-fixture/entries-en-1))
