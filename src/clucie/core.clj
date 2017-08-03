@@ -94,6 +94,7 @@
   [mode query-form ^QueryBuilder builder & {:keys [current-key]
                                        :or {current-key nil}}]
   (cond
+    (instance? Query query-form) query-form
     (sequential? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
                                (doseq [q (map #(query-form->query mode % builder :current-key current-key) query-form)]
                                  (when q
