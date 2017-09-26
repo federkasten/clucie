@@ -19,6 +19,17 @@
                         ~@filters)]
          (Analyzer$TokenStreamComponents. src# token#)))))
 
+(defmacro build-analyzer-with-charfilter
+  [charfilter-factory tokenizer & filters]
+  `(proxy [Analyzer] []
+     (createComponents [field-name#]
+       (let [src# ~tokenizer
+             token# (-> src#
+                        ~@filters)]
+         (Analyzer$TokenStreamComponents. src# token#)))
+     (initReader [field-name# reader#]
+       (proxy-super initReader field-name# (.create ~charfilter-factory reader#)))))
+
 (defn- char-set
   (^CharArraySet [stop-words]
    (char-set stop-words false))
