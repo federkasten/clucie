@@ -62,6 +62,14 @@
         (t-common/add-entry! entry-key entry-doc) => nil
         (t-common/search-entries entry-doc 10) => (t-common/results-is-valid? 1 entry-key)))))
 
+(facts "built analyzer"
+  (with-state-changes [(before :facts (t-common/prepare! t-common/built-analyzer nil t-fixture/entries-unnormalized-1))
+                       (after :facts (t-common/finish!))]
+    (fact "search exists entries"
+      (t-common/search-entries t-fixture/entries-unnormalized-1-search-1 10) => (t-common/results-is-valid? 1 (get-in t-fixture/entries-unnormalized-1 [0 0]))
+      (t-common/search-entries t-fixture/entries-unnormalized-1-search-2 10) => (t-common/results-is-valid? 2 (get-in t-fixture/entries-unnormalized-1 [1 0]))
+      (t-common/search-entries t-fixture/entries-unnormalized-1-search-2 10) => (t-common/results-is-valid? 2 (get-in t-fixture/entries-unnormalized-1 [2 0])))))
+
 (facts "ngram analyzer (en)"
   (with-state-changes [(before :facts (t-common/prepare! t-common/ngram-analyzer nil t-fixture/entries-en-1))
                        (after :facts (t-common/finish!))]
