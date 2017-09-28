@@ -13,7 +13,7 @@
                  [org.apache.lucene/lucene-analyzers-stempel "6.5.0"]
                  [org.apache.lucene/lucene-queryparser "6.5.0"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.8.0"]
-                                  [midje "1.8.3"]]
+                                  [midje "1.9.0-alpha9"]]
                    :plugins [[lein-cloverage "1.0.9"]
                              [lein-midje "3.2.1"]]
                    :global-vars {*warn-on-reflection* true
@@ -22,5 +22,5 @@
              :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
              :1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
-             :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha10"]]}}
+             :1.9 {:dependencies [[org.clojure/clojure "1.9.0-beta1"]]}}
   :signing {:gpg-key "me@tak.sh"})
