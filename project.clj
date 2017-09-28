@@ -1,17 +1,17 @@
-(defproject clucie "0.2.1-SNAPSHOT"
+(defproject clucie "0.3.0-SNAPSHOT"
   :description "Clojure for the Lucene"
   :url "https://github.com/federkasten/clucie"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :min-lein-version "2.5.0"
-  :dependencies [[org.apache.lucene/lucene-core "6.5.0"]
-                 [org.apache.lucene/lucene-analyzers-common "6.5.0"]
-                 [org.apache.lucene/lucene-analyzers-icu "6.5.0"]
-                 [org.apache.lucene/lucene-analyzers-kuromoji "6.5.0"]
-                 [org.apache.lucene/lucene-analyzers-phonetic "6.5.0"]
-                 [org.apache.lucene/lucene-analyzers-smartcn "6.5.0"]
-                 [org.apache.lucene/lucene-analyzers-stempel "6.5.0"]
-                 [org.apache.lucene/lucene-queryparser "6.5.0"]]
+  :dependencies [[org.apache.lucene/lucene-core "6.6.1"]
+                 [org.apache.lucene/lucene-analyzers-common "6.6.1"]
+                 [org.apache.lucene/lucene-analyzers-icu "6.6.1"]
+                 [org.apache.lucene/lucene-analyzers-kuromoji "6.6.1"]
+                 [org.apache.lucene/lucene-analyzers-phonetic "6.6.1"]
+                 [org.apache.lucene/lucene-analyzers-smartcn "6.6.1"]
+                 [org.apache.lucene/lucene-analyzers-stempel "6.6.1"]
+                 [org.apache.lucene/lucene-queryparser "6.6.1"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.8.0"]
                                   [midje "1.9.0-alpha9"]]
                    :plugins [[lein-cloverage "1.0.9"]
