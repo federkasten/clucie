@@ -7,7 +7,11 @@
             [clucie.analysis :as analysis]
             [clucie.store :as store])
   (:import [java.util UUID]
-           [java.io File]))
+           [java.util HashMap]
+           [java.io File]
+           [org.apache.lucene.analysis.core LowerCaseFilter]
+           [org.apache.lucene.analysis.icu ICUNormalizer2CharFilterFactory]
+           [org.apache.lucene.analysis.standard StandardTokenizer]))
 
 (def test-store (atom nil))
 (def doc-analyzer (atom nil))
@@ -17,6 +21,9 @@
 (def cjk-analyzer (analysis/cjk-analyzer))
 (def kuromoji-analyzer (analysis/kuromoji-analyzer))
 (def ngram-analyzer (analysis/ngram-analyzer 2 8 []))
+(def built-analyzer (analysis/build-analyzer (StandardTokenizer.)
+                                             :char-filter-factories [(ICUNormalizer2CharFilterFactory. (HashMap. {}))]
+                                             :token-filters [(LowerCaseFilter.)]))
 
 (defn add-entry! [k document]
   (core/add! @test-store

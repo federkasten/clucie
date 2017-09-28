@@ -11,13 +11,17 @@
            [java.io StringReader]))
 
 (defmacro build-analyzer
-  [tokenizer & filters]
+  [tokenizer & {:keys [char-filter-factories token-filters]}]
   `(proxy [Analyzer] []
      (createComponents [field-name#]
        (let [src# ~tokenizer
              token# (-> src#
-                        ~@filters)]
-         (Analyzer$TokenStreamComponents. src# token#)))))
+                        ~@token-filters)]
+         (Analyzer$TokenStreamComponents. src# token#)))
+     (initReader [field-name# reader#]
+       (proxy-super initReader
+                    field-name#
+                    (reduce #(.create %2 %1) reader# ~char-filter-factories)))))
 
 (defn- char-set
   (^CharArraySet [stop-words]
@@ -39,10 +43,10 @@
 (defn ngram-analyzer
   [min-length max-length stop-words]
   (build-analyzer (NGramTokenizer. min-length max-length)
-                  (NGramTokenFilter. min-length max-length)
-                  ;; (StandardFilter.) ; is it necessary?
-                  (LowerCaseFilter.)
-                  (StopFilter. (char-set stop-words))))
+                  :token-filters [(NGramTokenFilter. min-length max-length)
+                                  ;; (StandardFilter.) ; is it necessary?
+                                  (LowerCaseFilter.)
+                                  (StopFilter. (char-set stop-words))]))
 
 (defn cjk-analyzer
   (^org.apache.lucene.analysis.Analyzer []

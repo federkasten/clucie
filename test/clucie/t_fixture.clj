@@ -5,6 +5,14 @@
             [clucie.t-common :as t-common])
   (:import [org.apache.lucene.queryparser.classic ParseException]))
 
+(def entries-unnormalized-1
+  [["1" "ＦＵＬＬ　ｗｉｄｔｈ　ＳＥＮＴＥＮＣＥ"]
+   ["2" "Composed hat A: \u00c2:"]
+   ["3" "Decomposed hat A: A\u0302"]])
+
+(def entries-unnormalized-1-search-1 "sentence")
+(def entries-unnormalized-1-search-2 "\u00c2")
+
 (def entries-en-1
   [["1" "20130819"]
    ["2" "Hello"]

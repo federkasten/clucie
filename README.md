@@ -161,6 +161,18 @@ To tokenize,
   (analysis/kuromoji-tokenize text user-dict discard-punctuation? mode factory)) ; => ("富士" "は" "日本一" "の" "山")
 ```
 
+## To build analyzer
+
+This code builds an analyzer that normalizes input texts, then splits texts into words, and finally generates n-grams.
+
+```clojure
+(analysis/build-analyzer
+  (JapaneseTokenizer. nil true JapaneseTokenizer$Mode/NORMAL)
+  :char-filter-factories [(ICUNormalizer2CharFilterFactory. (HashMap. {"name" "nfkc", "mode" "compose"}))]
+  :token-filters [(LowerCaseFilter.)
+                  (max-shingle/MaxShingleFilter. 3 " ")])
+```
+
 # Run tests
 
 Run `lein midje`.
