@@ -8,6 +8,7 @@
            [org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper]
            [org.apache.lucene.analysis.tokenattributes OffsetAttribute]
            [org.apache.lucene.analysis CharArraySet Tokenizer]
+           [org.apache.lucene.analysis.util CharFilterFactory]
            [java.io StringReader]))
 
 (defmacro build-analyzer
@@ -21,7 +22,7 @@
      (initReader [field-name# reader#]
        (proxy-super initReader
                     field-name#
-                    (reduce #(.create %2 %1) reader# ~char-filter-factories)))))
+                    (reduce #(.create ^CharFilterFactory %2 %1) reader# ~char-filter-factories)))))
 
 (defn- char-set
   (^CharArraySet [stop-words]
