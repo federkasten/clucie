@@ -161,9 +161,10 @@ To tokenize,
   (analysis/kuromoji-tokenize text user-dict discard-punctuation? mode factory)) ; => ("富士" "は" "日本一" "の" "山")
 ```
 
-## To build analyzer
+## Custom analyzer
 
-This code builds an analyzer that normalizes input texts, then splits texts into words, and finally generates n-grams.
+To build custom analyzer, you can use `build-analyzer` macro.
+The following example builds an analyzer that normalizes input texts, splits texts into words, and generates n-grams.
 
 ```clojure
 (analysis/build-analyzer
