@@ -38,20 +38,26 @@
         (.setTokenized false)))
     field-type))
 
-(defn- add-field
-  "Add a Field to a Document."
-  [^Document document key value & [indexed?]]
+(defn- gen-field
+  "Generates an org.apache.lucene.document.Field from key and value. Set
+  indexed? true if value should be indexed."
+  [key value & [indexed?]]
   (let [{:keys [^String value value-type]} (estimate-value value)
-        ^String key (name key)
-        field (Field. key value (gen-field-type indexed?))]
-    (.add document field)))
+        ^String key (name key)]
+    (Field. key value (gen-field-type indexed?))))
 
 (defn- map->document
-  "Create a Document from a map."
+  "Creates an org.apache.lucene.document.Document from a map. The map can
+  optionally includes :clucie.core/raw-fields key, which value must be a
+  sequence of raw org.apache.lucene.document.Field instances."
   [m keys]
-  (let [document (Document.)]
-    (doseq [[key value] m]
-      (add-field document key value (contains? keys key)))
+  (let [document (Document.)
+        fields (concat (map (fn [[k v]]
+                              (gen-field k v (contains? keys k)))
+                            (dissoc m ::raw-fields))
+                       (::raw-fields m))]
+    (doseq [field fields]
+      (.add document field))
     document))
 
 (defn add!

@@ -6,6 +6,7 @@
             [clucie.t-common :as t-common]
             [clucie.t-fixture :as t-fixture])
   (:import [java.util UUID]
+           [org.apache.lucene.document Document Field$Store StringField]
            [org.apache.lucene.queryparser.flexible.standard StandardQueryParser]))
 
 (defmacro run-testset! [testset-symbol]
@@ -351,3 +352,15 @@
       (store/close! @t-common/test-store)
       (reset! t-common/test-store (store/disk-store tmp-store-path))
       (t-common/search-entries doc 10) => (t-common/results-is-valid? 1 k))))
+
+(facts "map->document"
+  (tabular
+   (fact "returns org.apache.lucene.document.Document"
+     (#'core/map->document ?m ?ks) => #(instance? Document %))
+   ?m ?ks
+   {:key "123", :doc "abc"} [:key :doc]
+   {:key 123, :doc "abc"} [:key :doc]
+   {:key :123, :doc "abc"} [:key :doc]
+   {:key "123", ::core/raw-fields [(StringField. "doc" "abc" Field$Store/YES)]} [:key])
+  (fact "throws exception"
+    (#'core/map->document {:key "123", ::core/raw-fields [{:doc "abc"}]} [:key]) => (throws Exception)))
