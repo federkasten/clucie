@@ -1,19 +1,12 @@
 (ns clucie.core
   (:require [clucie.store :as store]
             [clucie.analysis :refer [standard-analyzer]]
+            [clucie.document :as doc]
             [clucie.queryparser :as qp])
-  (:import [org.apache.lucene.document Document Field FieldType]
+  (:import [org.apache.lucene.document Document Field]
            [org.apache.lucene.util QueryBuilder]
            [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
            [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query PhraseQuery PhraseQuery$Builder WildcardQuery ScoreDoc TopDocs]))
-
-(defn- estimate-value
-  [v]
-  (cond
-    (string? v) {:value v :value-type :string}
-    (integer? v) {:value (str v) :value-type :integer}
-    (keyword? v) {:value (name v) :value-type :keyword}
-    :else {:value (str v) :value-type :unknown}))
 
 (defn- stringify-value
   ^String
@@ -24,42 +17,6 @@
     (keyword? v) (name v)
     :else (str v)))
 
-(defn- gen-field-type
-  ^FieldType
-  [indexed?]
-  (let [field-type (doto (new FieldType)
-                     (.setStored true))]
-    (if indexed?
-      (doto field-type
-        (.setIndexOptions IndexOptions/DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS)
-        (.setTokenized true))
-      (doto field-type
-        (.setIndexOptions IndexOptions/NONE)
-        (.setTokenized false)))
-    field-type))
-
-(defn- gen-field
-  "Generates an org.apache.lucene.document.Field from key and value. Set
-  indexed? true if value should be indexed."
-  [key value & [indexed?]]
-  (let [{:keys [^String value value-type]} (estimate-value value)
-        ^String key (name key)]
-    (Field. key value (gen-field-type indexed?))))
-
-(defn- map->document
-  "Creates an org.apache.lucene.document.Document from a map. The map can
-  optionally includes :clucie.core/raw-fields key, which value must be a
-  sequence of raw org.apache.lucene.document.Field instances."
-  [m keys]
-  (let [document (Document.)
-        fields (concat (map (fn [[k v]]
-                              (gen-field k v (contains? keys k)))
-                            (dissoc m ::raw-fields))
-                       (::raw-fields m))]
-    (doseq [field fields]
-      (.add document field))
-    document))
-
 (defn add!
   "Add hash-maps to the search index."
   ([index-store maps keys]
@@ -68,7 +25,7 @@
    (with-open [writer (store/store-writer index-store analyzer)]
      (doseq [m maps]
        (.addDocument writer
-                     (map->document m (set keys)))))))
+                     (doc/document m (set keys)))))))
 
 (defn update!
   ([index-store m keys search-key search-val]
@@ -77,7 +34,7 @@
    (with-open [writer (store/store-writer index-store analyzer)]
      (.updateDocument writer
                       (Term. (name search-key) (stringify-value search-val))
-                      (map->document m (set keys)))
+                      (doc/document m (set keys)))
      nil)))
 
 (defn delete!
@@ -89,12 +46,6 @@
                        ^"[Lorg.apache.lucene.index.Term;"
                        (into-array [(Term. (name search-key) (stringify-value search-val))]))
      nil)))
-
-(defn- document->map
-  "Turn a Document object into a map."
-  [^Document document]
-  (into {} (for [^Field f (.getFields document)]
-             [(keyword (.name f)) (.stringValue f)])))
 
 (defn- query-form->query
   [mode query-form ^QueryBuilder builder & {:keys [current-key]
@@ -142,7 +93,7 @@
       (vec
         (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
                                  (range start end))]
-          (let [m (document->map (.doc searcher (.doc hit)))
+          (let [m (doc/document->map (.doc searcher (.doc hit)))
                 score (.score hit)]
             (with-meta m {:score score})))))))
 
