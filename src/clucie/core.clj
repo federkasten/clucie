@@ -6,7 +6,8 @@
   (:import [org.apache.lucene.document Document Field]
            [org.apache.lucene.util QueryBuilder]
            [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
-           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query PhraseQuery PhraseQuery$Builder WildcardQuery ScoreDoc TopDocs]))
+           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query PhraseQuery PhraseQuery$Builder WildcardQuery ScoreDoc TopDocs]
+           [org.apache.lucene.store Directory]))
 
 (defn- stringify-value
   ^String
@@ -17,35 +18,63 @@
     (keyword? v) (name v)
     :else (str v)))
 
-(defn add!
-  "Add hash-maps to the search index."
+(defmulti add!
+  "Adds documents represented as maps to the search index."
+  {:arglists '([store-or-writer maps keys]
+               [store maps keys analyzer])}
+  #(class (first %&)))
+
+(defmethod add! Directory
   ([index-store maps keys]
    (add! index-store maps keys (standard-analyzer)))
   ([index-store maps keys analyzer]
    (with-open [writer (store/store-writer index-store analyzer)]
-     (doseq [m maps]
-       (.addDocument writer
-                     (doc/document m (set keys)))))))
+     (add! writer maps keys))))
 
-(defn update!
+(defmethod add! IndexWriter
+  [^IndexWriter writer maps keys]
+  (doseq [m maps]
+    (.addDocument writer (doc/document m (set keys)))))
+
+(defmulti update!
+  "Updates a document containing search-val on search-key."
+  {:arglists '([store-or-writer m keys search-key search-val]
+               [store m keys search-key search-val analyzer])}
+  #(class (first %&)))
+
+(defmethod update! Directory
   ([index-store m keys search-key search-val]
    (update! index-store m keys search-key search-val (standard-analyzer)))
   ([index-store m keys search-key search-val analyzer]
    (with-open [writer (store/store-writer index-store analyzer)]
-     (.updateDocument writer
-                      (Term. (name search-key) (stringify-value search-val))
-                      (doc/document m (set keys)))
-     nil)))
+     (update! writer m keys search-key search-val))))
 
-(defn delete!
+(defmethod update! IndexWriter
+  [^IndexWriter writer m keys search-key search-val]
+  (.updateDocument writer
+                   (Term. (name search-key) (stringify-value search-val))
+                   (doc/document m (set keys)))
+  nil)
+
+(defmulti delete!
+  "Deletes the document containing search-val on search-key."
+  {:arglists '([store-or-writer search-key search-val]
+               [store search-key search-val analyzer])}
+  #(class (first %&)))
+
+(defmethod delete! Directory
   ([index-store search-key search-val]
    (delete! index-store search-key search-val (standard-analyzer)))
   ([index-store search-key search-val analyzer]
    (with-open [writer (store/store-writer index-store analyzer)]
-     (.deleteDocuments writer
-                       ^"[Lorg.apache.lucene.index.Term;"
-                       (into-array [(Term. (name search-key) (stringify-value search-val))]))
-     nil)))
+     (delete! writer search-key search-val))))
+
+(defmethod delete! IndexWriter
+  [^IndexWriter writer search-key search-val]
+  (.deleteDocuments writer
+                    ^"[Lorg.apache.lucene.index.Term;"
+                    (into-array [(Term. (name search-key) (stringify-value search-val))]))
+  nil)
 
 (defn- query-form->query
   [mode query-form ^QueryBuilder builder & {:keys [current-key]
