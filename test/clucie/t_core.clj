@@ -388,3 +388,18 @@
       (with-open [writer (store/store-writer @t-common/test-store (analysis/standard-analyzer))]
         (core/delete! writer :key "1") => nil?
         (core/delete! writer :key "2" (analysis/standard-analyzer)) => (throws clojure.lang.ArityException)))))
+
+(facts "search*"
+  (with-state-changes [(before :facts (t-common/prepare! (analysis/standard-analyzer) nil t-fixture/entries-en-1))
+                       (after :facts (t-common/finish!))]
+    (fact "with store"
+      (#'core/search* :query @t-common/test-store
+                      [{:doc t-fixture/entries-en-1-search-1}]
+                      10 (analysis/standard-analyzer) 0 10)
+      => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [0 0])))
+    (fact "with reader"
+      (with-open [reader (store/store-reader @t-common/test-store)]
+        (#'core/search* :query reader
+                        [{:doc t-fixture/entries-en-1-search-1}]
+                        10 (analysis/standard-analyzer) 0 10)
+        => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [0 0]))))))
