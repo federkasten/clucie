@@ -107,43 +107,49 @@
                                                      query-form)
                            (throw (ex-info "invalid mode" {:mode mode})))))
 
-(defn- search*
+(defmulti ^:private search* #(class (second %&)))
+
+(defmethod search* Directory
   [mode index-store query-form max-results analyzer page results-per-page]
   (with-open [reader (store/store-reader index-store)]
-    (let [analyzer (or analyzer (standard-analyzer))
-          page (or page 0)
-          results-per-page (or results-per-page max-results)
-          ^IndexSearcher searcher (IndexSearcher. reader)
-          builder (QueryBuilder. analyzer)
-          ^Query query (query-form->query mode query-form builder)
-          ^TopDocs hits (.search searcher query (int max-results))
-          start (* page results-per-page)
-          end (min (+ start results-per-page) (.totalHits hits) max-results)]
-      (vec
-        (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
-                                 (range start end))]
-          (let [m (doc/document->map (.doc searcher (.doc hit)))
-                score (.score hit)]
-            (with-meta m {:score score})))))))
+    (search* mode reader query-form max-results analyzer page results-per-page)))
+
+(defmethod search* IndexReader
+  [mode ^IndexReader reader query-form max-results analyzer page results-per-page]
+  (let [analyzer (or analyzer (standard-analyzer))
+        page (or page 0)
+        results-per-page (or results-per-page max-results)
+        ^IndexSearcher searcher (IndexSearcher. reader)
+        builder (QueryBuilder. analyzer)
+        ^Query query (query-form->query mode query-form builder)
+        ^TopDocs hits (.search searcher query (int max-results))
+        start (* page results-per-page)
+        end (min (+ start results-per-page) (.totalHits hits) max-results)]
+    (vec
+     (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
+                              (range start end))]
+       (let [m (doc/document->map (.doc searcher (.doc hit)))
+             score (.score hit)]
+         (with-meta m {:score score}))))))
 
 (defn search
   "Search the supplied index with a query string."
-  [index-store query-form max-results & [analyzer page results-per-page]]
-  (search* :query index-store query-form max-results analyzer page results-per-page))
+  [store-or-reader query-form max-results & [analyzer page results-per-page]]
+  (search* :query store-or-reader query-form max-results analyzer page results-per-page))
 
 (defn phrase-search
   "Search the supplied index with a pharse query string."
-  [index-store query-form max-results & [analyzer page results-per-page]]
-  (search* :phrase-query index-store query-form max-results analyzer page results-per-page))
+  [store-or-reader query-form max-results & [analyzer page results-per-page]]
+  (search* :phrase-query store-or-reader query-form max-results analyzer page results-per-page))
 
 (defn wildcard-search
   "Search the supplied index with a wildcard query string."
-  [index-store query-form max-results & [analyzer page results-per-page]]
-  (search* :wildcard-query index-store query-form max-results analyzer page results-per-page))
+  [store-or-reader query-form max-results & [analyzer page results-per-page]]
+  (search* :wildcard-query store-or-reader query-form max-results analyzer page results-per-page))
 
 (defn qp-search
   "Search the supplied index with a classic-queryparser query string.
   NB: This may throw org.apache.lucene.queryparser.classic.ParseException
   by invalid query string."
-  [index-store query-form max-results & [analyzer page results-per-page]]
-  (search* :qp-query index-store query-form max-results analyzer page results-per-page))
+  [store-or-reader query-form max-results & [analyzer page results-per-page]]
+  (search* :qp-query store-or-reader query-form max-results analyzer page results-per-page))
