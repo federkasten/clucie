@@ -176,6 +176,26 @@ The following example builds an analyzer that normalizes input texts, splits tex
                   (max-shingle/MaxShingleFilter. 3 " ")])
 ```
 
+## Reusing connections
+
+By default, update/search functions create a new writer/reader each time,
+however, that is somewhat inefficient and not thread-safe. For high performance
+or concurrent processing, you can pass directly a writer/reader to them.
+
+```clojure
+(with-open [writer (store/store-writer index-store analyzer)]
+  (core/add! writer
+             [{:number "1" :title "Please Please Me"}
+              {:number "2" :title "With the Beatles"}]
+             [:number :title]))
+
+(with-open [reader (store/store-reader index-store)]
+  (core/search reader
+               {:title "Beatles"}
+               10
+               analyzer))
+```
+
 # Run tests
 
 Run `lein midje`.
