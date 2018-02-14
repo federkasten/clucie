@@ -351,3 +351,55 @@
       (store/close! @t-common/test-store)
       (reset! t-common/test-store (store/disk-store tmp-store-path))
       (t-common/search-entries doc 10) => (t-common/results-is-valid? 1 k))))
+
+(facts "add!"
+  (with-state-changes [(before :facts (t-common/prepare! (analysis/standard-analyzer) nil t-fixture/entries-en-1))
+                       (after :facts (t-common/finish!))]
+    (fact "with store"
+      (core/add! @t-common/test-store [{:key "123", :doc "abc"}] [:key :doc]) => nil?
+      (core/add! @t-common/test-store [{:key "456", :doc "def"}] [:key :doc]
+                 (analysis/standard-analyzer)) => nil?)
+    (fact "with writer"
+      (with-open [writer (store/store-writer @t-common/test-store (analysis/standard-analyzer))]
+        (core/add! writer [{:key "123", :doc "abc"}] [:key :doc]) => nil?
+        (core/add! writer [{:key "456", :doc "def"}] [:key :doc]
+                   (analysis/standard-analyzer)) => (throws clojure.lang.ArityException)))))
+
+(facts "update!"
+  (with-state-changes [(before :facts (t-common/prepare! (analysis/standard-analyzer) nil t-fixture/entries-en-1))
+                       (after :facts (t-common/finish!))]
+    (fact "with store"
+      (core/update! @t-common/test-store {:key "2", :doc "Hello world"} [:key :doc] :key "2") => nil?
+      (core/update! @t-common/test-store {:key "3", :doc "Osaka station"} [:key :doc] :key "3"
+                    (analysis/standard-analyzer)) => nil?)
+    (fact "with writer"
+      (with-open [writer (store/store-writer @t-common/test-store (analysis/standard-analyzer))]
+        (core/update! writer {:key "2", :doc "Hello world"} [:key :doc] :key "2") => nil?
+        (core/update! writer {:key "3", :doc "Osaka station"} [:key :doc] :key "3"
+                      (analysis/standard-analyzer)) => (throws clojure.lang.ArityException)))))
+
+(facts "delete!"
+  (with-state-changes [(before :facts (t-common/prepare! (analysis/standard-analyzer) nil t-fixture/entries-en-1))
+                       (after :facts (t-common/finish!))]
+    (fact "with store"
+      (core/delete! @t-common/test-store :key "1") => nil?
+      (core/delete! @t-common/test-store :key "2" (analysis/standard-analyzer)) => nil?)
+    (fact "with writer"
+      (with-open [writer (store/store-writer @t-common/test-store (analysis/standard-analyzer))]
+        (core/delete! writer :key "1") => nil?
+        (core/delete! writer :key "2" (analysis/standard-analyzer)) => (throws clojure.lang.ArityException)))))
+
+(facts "search*"
+  (with-state-changes [(before :facts (t-common/prepare! (analysis/standard-analyzer) nil t-fixture/entries-en-1))
+                       (after :facts (t-common/finish!))]
+    (fact "with store"
+      (#'core/search* :query @t-common/test-store
+                      [{:doc t-fixture/entries-en-1-search-1}]
+                      10 (analysis/standard-analyzer) 0 10)
+      => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [0 0])))
+    (fact "with reader"
+      (with-open [reader (store/store-reader @t-common/test-store)]
+        (#'core/search* :query reader
+                        [{:doc t-fixture/entries-en-1-search-1}]
+                        10 (analysis/standard-analyzer) 0 10)
+        => (t-common/results-is-valid? 1 (get-in t-fixture/entries-en-1 [0 0]))))))
