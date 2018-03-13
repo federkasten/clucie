@@ -13,8 +13,8 @@
                  [org.apache.lucene/lucene-analyzers-stempel "6.6.1"]
                  [org.apache.lucene/lucene-queryparser "6.6.1"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.8.0"]
-                                  [midje "1.9.0-alpha9"]]
-                   :plugins [[lein-cloverage "1.0.9"]
+                                  [midje "1.9.1"]]
+                   :plugins [[lein-cloverage "1.0.10"]
                              [lein-midje "3.2.1"]]
                    :global-vars {*warn-on-reflection* true
                                  *assert* true}}
