@@ -6,6 +6,31 @@
             BooleanClause$Occur BooleanQuery$Builder BoostQuery
             ConstantScoreQuery DisjunctionMaxQuery Query TermQuery]))
 
+(facts "parse-form"
+  (tabular
+   (fact "parses form, returning an org.apache.lucene.search.Query"
+     (let [q (query/parse-form ?form :mode ?mode)]
+       (instance? Query q) => truthy
+       (str q) => ?query-str))
+   ?form                     ?mode           ?query-str
+   {:a "1"}                  :query          "+a:1"
+   {:a ["1" "2"]}            :query          "+(+a:1 +a:2)"              ; AND
+   {:a "1" :b "2"}           :query          "+a:1 +b:2"                 ; AND (multi-keys)
+   [{:a "1"} {:b ["2" "3"]}] :query          "+(+a:1) +(+(+b:2 +b:3))"   ; AND (combination)
+   {:a #{"1" "2"}}           :query          "+(a:1 a:2)"                ; OR
+   #{{:a "1"} {:b "2"}}      :query          "(+a:1) (+b:2)"             ; OR (multi-keys)
+   {:a "1 2"}                :phrase-query   "+a:\"1 2\""                ; phrase
+   {:a "te?t"}               :wildcard-query "+a:te?t"                   ; wildcard
+   {:a "1 (+b:2 +c:3^2)"}    :qp-query       "+(a:1 (+b:2 +(c:3)^2.0))") ; queryparser
+  (tabular
+   (fact "throws exception"
+     (query/parse-form ?form :mode ?mode) => (throws Exception))
+   ?form     ?mode
+   {:a #"1"} :query
+   nil       :query
+   {:a "1"}  :invalid
+   {:a "1"}  nil))
+
 ;; a:1 (+b:2 +c:3) (d:4)^2.0 ConstantScore(e:5) (f:6 | g:7)~0.1
 (def test-query
   (let [qb (BooleanQuery$Builder.)]
