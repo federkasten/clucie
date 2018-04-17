@@ -91,12 +91,14 @@
         ^TopDocs hits (.search searcher query (int max-results))
         start (* page results-per-page)
         end (min (+ start results-per-page) (.totalHits hits) max-results)]
-    (vec
-     (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
-                              (range start end))]
-       (let [m (doc/document->map (.doc searcher (.doc hit)))
-             score (.score hit)]
-         (with-meta m {:score score}))))))
+    (with-meta
+      (vec
+       (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
+                                (range start end))]
+         (let [m (doc/document->map (.doc searcher (.doc hit)))
+               score (.score hit)]
+           (with-meta m {:score score}))))
+      {:total-hits (.totalHits hits)})))
 
 (defn search
   "Search the supplied index with a query string."
