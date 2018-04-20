@@ -2,11 +2,9 @@
   (:require [clucie.store :as store]
             [clucie.analysis :refer [standard-analyzer]]
             [clucie.document :as doc]
-            [clucie.queryparser :as qp])
-  (:import [org.apache.lucene.document Document Field]
-           [org.apache.lucene.util QueryBuilder]
-           [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
-           [org.apache.lucene.search BooleanClause BooleanClause$Occur BooleanQuery IndexSearcher Query PhraseQuery PhraseQuery$Builder WildcardQuery ScoreDoc TopDocs]
+            [clucie.query :as q])
+  (:import [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
+           [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs]
            [org.apache.lucene.store Directory]))
 
 (defn- stringify-value
@@ -76,37 +74,6 @@
                     (into-array [(Term. (name search-key) (stringify-value search-val))]))
   nil)
 
-(defn- query-form->query
-  [mode query-form ^QueryBuilder builder & {:keys [current-key]
-                                       :or {current-key nil}}]
-  (cond
-    (instance? Query query-form) query-form
-    (sequential? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
-                               (doseq [q (map #(query-form->query mode % builder :current-key current-key) query-form)]
-                                 (when q
-                                   (.add qb q BooleanClause$Occur/MUST)))
-                               (.build qb))
-    (set? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
-                        (doseq [q (map #(query-form->query mode % builder :current-key current-key) query-form)]
-                          (when q
-                            (.add qb q BooleanClause$Occur/SHOULD)))
-                        (.build qb))
-    (map? query-form) (let [qb (new org.apache.lucene.search.BooleanQuery$Builder)]
-                        (doseq [q (->> query-form
-                                       (map (fn [[k v]]
-                                              (query-form->query mode v builder :current-key k)))
-                                       (filter identity))]
-                          (.add qb q BooleanClause$Occur/MUST))
-                        (.build qb))
-    (string? query-form) (case mode
-                           :query (.createBooleanQuery builder (name current-key) query-form)
-                           :phrase-query (.createPhraseQuery builder (name current-key) query-form)
-                           :wildcard-query (WildcardQuery. (Term. (name current-key) ^String query-form))
-                           :qp-query (qp/parse-query (.getAnalyzer builder)
-                                                     (name current-key)
-                                                     query-form)
-                           (throw (ex-info "invalid mode" {:mode mode})))))
-
 (defmulti ^:private search* #(class (second %&)))
 
 (defmethod search* Directory
@@ -120,18 +87,19 @@
         page (or page 0)
         results-per-page (or results-per-page max-results)
         ^IndexSearcher searcher (IndexSearcher. reader)
-        builder (QueryBuilder. analyzer)
-        ^Query query (query-form->query mode query-form builder)
+        query (q/parse-form query-form :analyzer analyzer :mode mode)
         ^TopDocs hits (.search searcher query (int max-results))
         start (* page results-per-page)
         end (min (+ start results-per-page) (.totalHits hits) max-results)]
-    (vec
-     (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
-                              (range start end))]
-       (let [doc-id (.doc hit)
-             m (doc/document->map (.doc searcher doc-id))
-             score (.score hit)]
-         (with-meta m {:score score :doc-id doc-id}))))))
+    (with-meta
+      (vec
+       (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
+                                (range start end))]
+         (let [doc-id (.doc hit)
+               m (doc/document->map (.doc searcher doc-id))
+               score (.score hit)]
+           (with-meta m {:score score :doc-id doc-id}))))
+      {:total-hits (.totalHits hits)})))
 
 (defn search
   "Search the supplied index with a query string."

@@ -116,12 +116,18 @@
     (reset! test-store store)
     (add-entries! (apply concat target-entries))))
 
+(defn- assert-total-hits [results]
+  (let [{:keys [total-hits]} (meta results)]
+    (assert (integer? total-hits))
+    (assert (>= total-hits 0))))
+
 (defn all-results-has-score? [results]
   (doseq [r results]
     (assert (number? (:score (meta r))))))
 
 (defn results-is-valid? [quantity & [entry-key]]
   (fn [results]
+    (assert-total-hits results)
     (all-results-has-score? results)
     (if (or (zero? quantity) (not entry-key))
       (= quantity (count results))
