@@ -95,9 +95,10 @@
       (vec
        (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
                                 (range start end))]
-         (let [m (doc/document->map (.doc searcher (.doc hit)))
+         (let [doc-id (.doc hit)
+               m (doc/document->map (.doc searcher doc-id))
                score (.score hit)]
-           (with-meta m {:score score}))))
+           (with-meta m {:score score :doc-id doc-id}))))
       {:total-hits (.totalHits hits)})))
 
 (defn search
