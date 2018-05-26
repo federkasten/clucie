@@ -1,4 +1,4 @@
-(defproject clucie "0.3.3-SNAPSHOT"
+(defproject clucie "0.4.0"
   :description "Clojure for the Lucene"
   :url "https://github.com/federkasten/clucie"
   :license {:name "Apache License, Version 2.0"
