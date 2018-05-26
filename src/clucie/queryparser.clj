@@ -5,6 +5,8 @@
 
 (defn ^Query parse-query
   [^Analyzer analyzer ^String default-field-name ^String query-string]
-  (let [^QueryParser qp (QueryParser. default-field-name analyzer)
-        _ (.setAutoGeneratePhraseQueries qp true)]
+  (let [^QueryParser qp (QueryParser. default-field-name analyzer)]
+    (doto qp
+      (.setSplitOnWhitespace true)
+      (.setAutoGeneratePhraseQueries true))
     (.parse qp query-string)))
