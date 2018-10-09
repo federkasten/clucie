@@ -7,7 +7,10 @@
   (cond
     (string? v) {:value v :value-type :string}
     (integer? v) {:value (str v) :value-type :integer}
-    (keyword? v) {:value (name v) :value-type :keyword}
+    (keyword? v) (let [v' (if (some? (namespace v))
+                            (-> v str (subs 1))
+                            (name v))]
+                   {:value v' :value-type :keyword})
     :else {:value (str v) :value-type :unknown}))
 
 (defn ^FieldType field-type

@@ -13,7 +13,9 @@
   (cond
     (string? v) v
     (integer? v) (str v)
-    (keyword? v) (name v)
+    (keyword? v) (if (some? (namespace v))
+                   (-> v str (subs 1))
+                   (name v))
     :else (str v)))
 
 (defmulti add!
