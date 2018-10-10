@@ -35,7 +35,8 @@
    ?k   ?v
    :key "123"
    "key" 123
-   :key :123)
+   :key :123
+   :key ::123)
   (fact "throws exception"
     (doc/field nil "123") => (throws Exception)))
 
@@ -47,6 +48,7 @@
    {:key "123", :doc "abc"} [:key :doc]
    {:key 123, :doc "abc"} [:key :doc]
    {:key :123, :doc "abc"} [:key :doc]
+   {:key ::123, :doc "abc"} [:key :doc]
    {:key "123", :clucie.core/raw-fields [(StringField. "doc" "abc" Field$Store/YES)]} [:key])
   (fact "throws exception"
     (doc/document {:key "123", :clucie.core/raw-fields [{:doc "abc"}]} [:key]) => (throws Exception)))
