@@ -1,4 +1,5 @@
 (ns clucie.document
+  (:require [clucie.utils :refer [keyword->str]])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.index IndexOptions]))
 
@@ -7,10 +8,7 @@
   (cond
     (string? v) {:value v :value-type :string}
     (integer? v) {:value (str v) :value-type :integer}
-    (keyword? v) (let [v' (if (some? (namespace v))
-                            (-> v str (subs 1))
-                            (name v))]
-                   {:value v' :value-type :keyword})
+    (keyword? v) {:value (keyword->str v) :value-type :keyword}
     :else {:value (str v) :value-type :unknown}))
 
 (defn ^FieldType field-type
