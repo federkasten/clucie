@@ -3,7 +3,6 @@
 (defn keyword->str
   ^String
   [x]
-  (when (keyword? x)
-    (if (some? (namespace x))
-      (-> x str (subs 1))
-      (name x))))
+  (if (some? (namespace x))
+    (-> x str (subs 1))
+    (name x)))
