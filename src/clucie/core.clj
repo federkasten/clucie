@@ -1,6 +1,7 @@
 (ns clucie.core
   (:require [clucie.store :as store]
             [clucie.analysis :refer [standard-analyzer]]
+            [clucie.utils :refer [keyword->str]]
             [clucie.document :as doc]
             [clucie.query :as q])
   (:import [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
@@ -13,9 +14,7 @@
   (cond
     (string? v) v
     (integer? v) (str v)
-    (keyword? v) (if (some? (namespace v))
-                   (-> v str (subs 1))
-                   (name v))
+    (keyword? v) (keyword->str v)
     :else (str v)))
 
 (defmulti add!
