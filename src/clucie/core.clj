@@ -1,21 +1,12 @@
 (ns clucie.core
   (:require [clucie.store :as store]
             [clucie.analysis :refer [standard-analyzer]]
-            [clucie.utils :refer [keyword->str]]
+            [clucie.utils :refer [stringify-value]]
             [clucie.document :as doc]
             [clucie.query :as q])
   (:import [org.apache.lucene.index IndexWriter IndexReader IndexOptions Term]
            [org.apache.lucene.search IndexSearcher ScoreDoc TopDocs]
            [org.apache.lucene.store Directory]))
-
-(defn- stringify-value
-  ^String
-  [v]
-  (cond
-    (string? v) v
-    (integer? v) (str v)
-    (keyword? v) (keyword->str v)
-    :else (str v)))
 
 (defmulti add!
   "Adds documents represented as maps to the search index."
@@ -51,7 +42,7 @@
 (defmethod update! IndexWriter
   [^IndexWriter writer m keys search-key search-val]
   (.updateDocument writer
-                   (Term. (name search-key) (stringify-value search-val))
+                   (Term. (stringify-value search-key) (stringify-value search-val))
                    (doc/document m (set keys)))
   nil)
 
@@ -72,7 +63,7 @@
   [^IndexWriter writer search-key search-val]
   (.deleteDocuments writer
                     ^"[Lorg.apache.lucene.index.Term;"
-                    (into-array [(Term. (name search-key) (stringify-value search-val))]))
+                    (into-array [(Term. (stringify-value search-key) (stringify-value search-val))]))
   nil)
 
 (defmulti ^:private search* #(class (second %&)))

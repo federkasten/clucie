@@ -32,13 +32,19 @@
   (tabular
    (fact "returns org.apache.lucene.document.Field"
      (doc/field ?k ?v) => #(instance? Field %))
-   ?k   ?v
+   ?k ?v
    :key "123"
    "key" 123
-   :key :123
-   :key ::123)
-  (fact "throws exception"
-    (doc/field nil "123") => (throws Exception)))
+   'key 'v
+   'key 'x/v
+   'x/key 'v
+   'x/key 'x/v
+   :key :v
+   :key ::v
+   ::key :v
+   ::key ::v
+   (fact "throws exception"
+     (doc/field nil "123") => (throws Exception))))
 
 (facts "document"
   (tabular
@@ -47,8 +53,14 @@
    ?m ?ks
    {:key "123", :doc "abc"} [:key :doc]
    {:key 123, :doc "abc"} [:key :doc]
+   {'key 'v, :doc "abc"} ['key :doc]
+   {'key 'x/v, :doc "abc"} ['key :doc]
+   {'x/key 'x, :doc "abc"} ['x/key :doc]
+   {'x/key 'x/v, :doc "abc"} ['x/key :doc]
    {:key :123, :doc "abc"} [:key :doc]
    {:key ::123, :doc "abc"} [:key :doc]
+   {::key :123, :doc "abc"} [::key :doc]
+   {::key ::123, :doc "abc"} [::key :doc]
    {:key "123", :clucie.core/raw-fields [(StringField. "doc" "abc" Field$Store/YES)]} [:key])
   (fact "throws exception"
     (doc/document {:key "123", :clucie.core/raw-fields [{:doc "abc"}]} [:key]) => (throws Exception)))
