@@ -1,5 +1,5 @@
 (ns clucie.document
-  (:require [clucie.utils :refer [stringify-value keyword->str]])
+  (:require [clucie.utils :refer [stringify-value keyword->str qualified?]])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.index IndexOptions]))
 
@@ -49,7 +49,7 @@
                           (let [exists? (contains? keys k)]
                             (field k v {:indexed? exists?
                                         :stored? true
-                                        :tokenized? (and exists? (not (qualified-ident? v)))})))
+                                        :tokenized? (and exists? (not (qualified? v)))})))
                         (dissoc m :clucie.core/raw-fields))
                    (:clucie.core/raw-fields m))]
     (doseq [^Field f fs]

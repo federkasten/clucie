@@ -1,5 +1,14 @@
 (ns clucie.utils)
 
+(defn kw-or-symbol? [x]
+  (or (keyword? x)
+      (symbol? x)))
+
+(defn qualified? [x]
+  (boolean (and (kw-or-symbol? x)
+                (namespace x)
+                true)))
+
 (defn keyword->str
   ^String
   [x]

@@ -2,6 +2,32 @@
   (:require [midje.sweet :refer :all]
             [clucie.utils :as utils]))
 
+(facts "kw-or-symbol?"
+       (tabular
+         (fact "returns true when given value is keyword or symbol"
+           (utils/kw-or-symbol? ?x) => ?expected)
+         ?x   ?expected
+         :x   truthy
+         ::x  truthy
+         :x/y truthy
+         'x   truthy
+         'x/y truthy
+         1    falsey
+         "1"  falsey))
+
+(facts "qualified?"
+       (tabular
+         (fact "returns true when given value is qualified ident"
+               (utils/qualified? ?x) => ?expected)
+         ?x   ?expected
+         :x   falsey
+         ::x  truthy
+         :x/y truthy
+         'x   falsey
+         'x/y truthy
+         1    falsey
+         "1"  falsey))
+
 (facts "keyword->str"
   (tabular
     (fact "qualified keyword returns as string with namespace"
