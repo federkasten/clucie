@@ -2,10 +2,10 @@
   (:require [midje.sweet :refer :all]
             [clucie.utils :as utils]))
 
-(facts "kw-or-symbol?"
+(facts "keyword-or-symbol?"
        (tabular
          (fact "returns true when given value is keyword or symbol"
-           (utils/kw-or-symbol? ?x) => ?expected)
+               (utils/keyword-or-symbol? ?x) => ?expected)
          ?x   ?expected
          :x   truthy
          ::x  truthy
