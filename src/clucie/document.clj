@@ -1,5 +1,5 @@
 (ns clucie.document
-  (:require [clucie.utils :refer [keyword->str]])
+  (:require [clucie.utils :refer [stringify-value keyword->str qualified?]])
   (:import [org.apache.lucene.document Document Field FieldType]
            [org.apache.lucene.index IndexOptions]))
 
@@ -37,7 +37,7 @@
   ([key value] (field key value {}))
   ([key value opts]
    (let [{:keys [^String value]} (estimate-value value)]
-     (Field. (name key) value (field-type opts)))))
+     (Field. (stringify-value key) value (field-type opts)))))
 
 (defn ^Document document
   "Creates an org.apache.lucene.document.Document from a map. The map can
@@ -46,9 +46,10 @@
   [m keys]
   (let [doc (Document.)
         fs (concat (map (fn [[k v]]
-                          (field k v {:indexed? (contains? keys k)
-                                      :stored? true
-                                      :tokenized? (contains? keys k)}))
+                          (let [exists? (contains? keys k)]
+                            (field k v {:indexed? exists?
+                                        :stored? true
+                                        :tokenized? (and exists? (not (qualified? v)))})))
                         (dissoc m :clucie.core/raw-fields))
                    (:clucie.core/raw-fields m))]
     (doseq [^Field f fs]

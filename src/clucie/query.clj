@@ -1,6 +1,7 @@
 (ns clucie.query
   (:require [clucie.analysis :as analysis]
-            [clucie.queryparser :as qp])
+            [clucie.queryparser :as qp]
+            [clucie.utils :refer [stringify-value]])
   (:import [org.apache.lucene.index Term]
            [org.apache.lucene.search
             BooleanClause BooleanClause$Occur BooleanQuery BooleanQuery$Builder
@@ -37,12 +38,13 @@
 
   String
   (parse-formt [s {:keys [^QueryBuilder builder mode key]}]
-    (case mode
-      :query (.createBooleanQuery builder (name key) s)
-      :phrase-query (.createPhraseQuery builder (name key) s)
-      :wildcard-query (WildcardQuery. (Term. (name key) s))
-      :qp-query (qp/parse-query (.getAnalyzer builder) (name key) s)
-      (throw (ex-info (str "Invalid mode " mode) {:mode mode})))))
+    (let [k (stringify-value key)]
+      (case mode
+        :query (.createBooleanQuery builder k s)
+        :phrase-query (.createPhraseQuery builder k s)
+        :wildcard-query (WildcardQuery. (Term. k s))
+        :qp-query (qp/parse-query (.getAnalyzer builder) k s)
+        (throw (ex-info (str "Invalid mode " mode) {:mode mode}))))))
 
 (defn ^Query parse-form
   "Parses form, returning an org.apache.lucene.search.Query.
@@ -68,7 +70,7 @@
       java.util.regex.Pattern
       (parse-formt [re {:keys [key]}]
         (org.apache.lucene.search.RegexpQuery.
-         (org.apache.lucene.index.Term. (name key) (.pattern re)))))
+         (org.apache.lucene.index.Term. (stringify-value key) (.pattern re)))))
 
   adds a new rule that builds an org.apache.lucene.search.RegexpQuery from a
   regexp."
