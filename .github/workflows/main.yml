@@ -1,0 +1,24 @@
+name: main
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: [ ubuntu-latest ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache local repository
+        uses: actions/cache@v2.1.5
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/project.clj') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install dependencies and check them
+        run: |
+          lein with-profile +dev -U deps
+          lein with-profile +dev deps :tree 2> /tmp/deps_warning.txt
+          WARN=$( grep "Possibly confusing dependencies found" /tmp/deps_warning.txt || true )
+          test -z "$WARN"
+      - name: Run tests
+        run: lein test :all

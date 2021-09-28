@@ -13,7 +13,7 @@
                  [org.apache.lucene/lucene-analyzers-stempel "7.5.0"]
                  [org.apache.lucene/lucene-queryparser "7.5.0"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
-                                  [midje "1.9.4"]]
+                                  [midje "1.9.4" :exclusions [commons-codec]]]
                    :plugins [[lein-cloverage "1.0.13"]
                              [lein-midje "3.2.1"]]
                    :global-vars {*warn-on-reflection* true
