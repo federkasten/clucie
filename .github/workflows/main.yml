@@ -4,6 +4,9 @@ name: main
 
 on: [push, pull_request]
 
+env:
+  CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+
 jobs:
   build:
     runs-on: [ ubuntu-latest ]
