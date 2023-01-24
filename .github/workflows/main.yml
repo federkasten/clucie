@@ -8,7 +8,7 @@ env:
   CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
 
 jobs:
-  build:
+  test:
     runs-on: [ ubuntu-latest ]
     strategy:
       matrix:
@@ -38,6 +38,11 @@ jobs:
       - name: Run tests
         run: |
           lein with-profile dev,1.10 midje
+  coverage:
+    runs-on: [ ubuntu-latest ]
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v3
       - name: Prepare CodeClimate Test Reporter
         run: |
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter

@@ -6,8 +6,8 @@ jobs:
   lint:
     runs-on: [ ubuntu-latest ]
     steps:
-    - uses: actions/checkout@v2
-    - uses: federkasten/clj-lint-action@721f5b94f2d064372c5afbcab31d3d00b6b06c7f
+    - uses: actions/checkout@v3
+    - uses: xcoo/clj-lint-action@v1.1.11
       with:
         linters: "\"all\""
         github_token: ${{ secrets.GITHUB_TOKEN }}
