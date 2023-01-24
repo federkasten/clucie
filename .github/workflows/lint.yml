@@ -1,0 +1,16 @@
+name: lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: [ ubuntu-latest ]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: xcoo/clj-lint-action@v1.1.11
+      with:
+        linters: "\"all\""
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        runner: ":leiningen"
+        base_sha: ${{ github.event.pull_request.base.sha||github.event.before }}
+        eastwood_linters: "[:all]"

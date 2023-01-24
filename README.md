@@ -6,8 +6,6 @@ Clojure for the Lucene
 
 [![Clojars Project](https://img.shields.io/clojars/v/clucie.svg)](https://clojars.org/clucie)
 
-[![codecov](https://codecov.io/gh/federkasten/clucie/branch/master/graph/badge.svg)](https://codecov.io/gh/federkasten/clucie)
-
 # Usage
 
 ## Simple Usage
