@@ -1,3 +1,5 @@
+---
+
 name: main
 
 on: [push, pull_request]
@@ -5,9 +7,19 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: [ ubuntu-latest ]
+    strategy:
+      matrix:
+        java: [ '8', '11', '17', '19']
+    name: Java ${{ matrix.java }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Cache local repository
+      - uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'adopt'
+          architecture: x64
+      - name: Cache m2 repository
         uses: actions/cache@v2.1.5
         with:
           path: ~/.m2
@@ -21,4 +33,17 @@ jobs:
           WARN=$( grep "Possibly confusing dependencies found" /tmp/deps_warning.txt || true )
           test -z "$WARN"
       - name: Run tests
-        run: lein test :all
+        run: |
+          lein with-profile dev,1.10 midje
+      - name: Prepare CodeClimate Test Reporter
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+      - name: Submit coverage to CodeClimate
+        run: |
+          ./cc-test-reporter before-build
+          LEIN_FAST_TRAMPOLINE=1 lein trampoline cloverage --lcov --no-text --no-html --no-summary -o $PWD
+          testRes=$?
+          mkdir -p coverage
+          mv lcov.info coverage/lcov.info
+          ./cc-test-reporter after-build --coverage-input-type lcov --exit-code $testRes
