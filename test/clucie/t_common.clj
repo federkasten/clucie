@@ -1,5 +1,5 @@
 (ns clucie.t-common
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer :all]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.pprint :as pprint]

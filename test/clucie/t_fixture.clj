@@ -1,5 +1,5 @@
 (ns clucie.t-fixture
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer :all]
             [clucie.core :as core]
             [clucie.analysis :as analysis]
             [clucie.t-common :as t-common])

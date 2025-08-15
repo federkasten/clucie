@@ -1,5 +1,5 @@
 (ns clucie.analysis
-  (:import [org.apache.lucene.analysis.standard StandardAnalyzer StandardTokenizer StandardFilter]
+  (:import [org.apache.lucene.analysis.standard StandardAnalyzer StandardTokenizer]
            [org.apache.lucene.analysis.core KeywordAnalyzer LowerCaseFilter StopFilter]
            [org.apache.lucene.analysis.cjk CJKAnalyzer]
            [org.apache.lucene.analysis.ngram NGramTokenizer NGramTokenFilter]
@@ -8,7 +8,7 @@
            [org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper]
            [org.apache.lucene.analysis.tokenattributes OffsetAttribute]
            [org.apache.lucene.analysis CharArraySet Tokenizer]
-           [org.apache.lucene.analysis.util CharFilterFactory]
+           [org.apache.lucene.analysis CharFilterFactory]
            [java.io StringReader]))
 
 (defmacro build-analyzer
@@ -44,9 +44,7 @@
 (defn ngram-analyzer
   [min-length max-length stop-words]
   (build-analyzer (NGramTokenizer. min-length max-length)
-                  :token-filters [(NGramTokenFilter. min-length max-length)
-                                  ;; (StandardFilter.) ; is it necessary?
-                                  (LowerCaseFilter.)
+                  :token-filters [(LowerCaseFilter.)
                                   (StopFilter. (char-set stop-words))]))
 
 (defn cjk-analyzer

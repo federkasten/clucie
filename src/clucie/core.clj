@@ -82,7 +82,7 @@
         query (q/parse-form query-form :analyzer analyzer :mode mode)
         ^TopDocs hits (.search searcher query (int max-results))
         start (* page results-per-page)
-        end (min (+ start results-per-page) (.totalHits hits) max-results)]
+        end (min (+ start results-per-page) (.value (.totalHits hits)) max-results)]
     (with-meta
       (vec
        (for [^ScoreDoc hit (map (partial aget (.scoreDocs hits))
@@ -91,7 +91,7 @@
                m (doc/document->map (.doc searcher doc-id))
                score (.score hit)]
            (with-meta m {:score score :doc-id doc-id}))))
-      {:total-hits (.totalHits hits)})))
+      {:total-hits (.value (.totalHits hits))})))
 
 (defn search
   "Search the supplied index with a query string."
