@@ -1,53 +1,41 @@
 (ns clucie.t-utils
-  (:require [midje.sweet :refer :all]
+  (:require [clojure.test :refer :all]
             [clucie.utils :as utils]))
 
-(facts "keyword-or-symbol?"
-       (tabular
-         (fact "returns true when given value is keyword or symbol"
-               (utils/keyword-or-symbol? ?x) => ?expected)
-         ?x   ?expected
-         :x   truthy
-         ::x  truthy
-         :x/y truthy
-         'x   truthy
-         'x/y truthy
-         1    falsey
-         "1"  falsey))
+(deftest test-keyword-or-symbol?
+  (testing "returns true when given value is keyword or symbol"
+    (is (utils/keyword-or-symbol? :x))
+    (is (utils/keyword-or-symbol? ::x))
+    (is (utils/keyword-or-symbol? :x/y))
+    (is (utils/keyword-or-symbol? 'x))
+    (is (utils/keyword-or-symbol? 'x/y))
+    (is (not (utils/keyword-or-symbol? 1)))
+    (is (not (utils/keyword-or-symbol? "1")))))
 
-(facts "qualified?"
-       (tabular
-         (fact "returns true when given value is qualified ident"
-               (utils/qualified? ?x) => ?expected)
-         ?x   ?expected
-         :x   falsey
-         ::x  truthy
-         :x/y truthy
-         'x   falsey
-         'x/y truthy
-         1    falsey
-         "1"  falsey))
+(deftest test-qualified?
+  (testing "returns true when given value is qualified ident"
+    (is (not (utils/qualified? :x)))
+    (is (utils/qualified? ::x))
+    (is (utils/qualified? :x/y))
+    (is (not (utils/qualified? 'x)))
+    (is (utils/qualified? 'x/y))
+    (is (not (utils/qualified? 1)))
+    (is (not (utils/qualified? "1")))))
 
-(facts "keyword->str"
-  (tabular
-    (fact "qualified keyword returns as string with namespace"
-      (utils/keyword->str ?x) => ?expected)
-    ?x   ?expected
-    :x   "x"
-    :x/y "x/y"
-    ::x  "clucie.t-utils/x"))
+(deftest test-keyword->str
+  (testing "qualified keyword returns as string with namespace"
+    (is (= "x" (utils/keyword->str :x)))
+    (is (= "x/y" (utils/keyword->str :x/y)))
+    (is (= "clucie.t-utils/x" (utils/keyword->str ::x)))))
 
-(facts "stringify-value"
-       (tabular
-         (fact "stringify-value returns given value as string"
-           (utils/stringify-value ?x) => ?expected)
-         ?x   ?expected
-         nil  nil
-         1    "1"
-         1.1  "1.1"
-         "x"  "x"
-         'x   "x"
-         'x/y "x/y"
-         :x   "x"
-         :x/y "x/y"
-         ::x  "clucie.t-utils/x"))
+(deftest test-stringify-value
+  (testing "stringify-value returns given value as string"
+    (is (nil? (utils/stringify-value nil)))
+    (is (= "1" (utils/stringify-value 1)))
+    (is (= "1.1" (utils/stringify-value 1.1)))
+    (is (= "x" (utils/stringify-value "x")))
+    (is (= "x" (utils/stringify-value 'x)))
+    (is (= "x/y" (utils/stringify-value 'x/y)))
+    (is (= "x" (utils/stringify-value :x)))
+    (is (= "x/y" (utils/stringify-value :x/y)))
+    (is (= "clucie.t-utils/x" (utils/stringify-value ::x)))))
