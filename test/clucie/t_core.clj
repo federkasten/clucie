@@ -93,8 +93,7 @@
     (finally
       (t-common/finish!))))
 
-;; TODO: Fix ngram analyzer for Lucene 9.x
-#_(deftest test-ngram-analyzer-en
+(deftest test-ngram-analyzer-en
   (t-common/prepare! t-common/ngram-analyzer nil t-fixture/entries-en-1)
   (try
     (testing "search exists entries"
@@ -121,8 +120,7 @@
     (finally
       (t-common/finish!))))
 
-;; TODO: Fix ngram analyzer for Lucene 9.x
-#_(deftest test-ngram-analyzer-ja
+(deftest test-ngram-analyzer-ja
   (t-common/prepare! t-common/ngram-analyzer nil t-fixture/entries-ja-1)
   (try
     (testing "search exists entries"
@@ -149,8 +147,7 @@
     (finally
       (t-common/finish!))))
 
-;; TODO: Fix ngram analyzer for Lucene 9.x
-#_(deftest test-ngram-analyzer-phrase-search-en
+(deftest test-ngram-analyzer-phrase-search-en
   (t-common/prepare! t-common/ngram-analyzer nil t-fixture/entries-en-1)
   (try
     (testing "search exists entries"
@@ -177,8 +174,7 @@
     (finally
       (t-common/finish!))))
 
-;; TODO: Fix ngram analyzer for Lucene 9.x
-#_(deftest test-ngram-analyzer-phrase-search-ja
+(deftest test-ngram-analyzer-phrase-search-ja
   (t-common/prepare! t-common/ngram-analyzer nil t-fixture/entries-ja-1)
   (try
     (testing "search exists entries"
@@ -265,8 +261,7 @@
       (finally
         (t-common/finish!))))
   
-  ;; TODO: Fix ngram analyzer for Lucene 9.x
-  #_(testing "ngram analyzer (en)"
+  (testing "ngram analyzer (en)"
     (t-common/prepare! (analysis/ngram-analyzer 2 8 t-fixture/stop-words-en) nil t-fixture/entries-en-1)
     (try
       (is ((t-common/results-is-valid? 1)
@@ -411,10 +406,9 @@
 (run-testset! t-fixture/testset-kuro-s)
 (run-testset! t-fixture/testset-kuro-p)
 (run-testset! t-fixture/testset-kuro-q)
-;; TODO: Fix ngram analyzer for Lucene 9.x
-#_(run-testset! t-fixture/testset-ngram-s)
-#_(run-testset! t-fixture/testset-ngram-p)
-#_(run-testset! t-fixture/testset-ngram-q)
+(run-testset! t-fixture/testset-ngram-s)
+(run-testset! t-fixture/testset-ngram-p)
+(run-testset! t-fixture/testset-ngram-q)
 
 (deftest test-raw-query-search
   (t-common/prepare! t-common/standard-analyzer nil t-fixture/entries-en-1)
