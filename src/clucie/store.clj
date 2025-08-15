@@ -2,14 +2,14 @@
   (:require [clojure.java.io :as io])
   (:import [java.nio.file Paths]
            [org.apache.lucene.analysis Analyzer]
-           [org.apache.lucene.store NIOFSDirectory RAMDirectory Directory]
+           [org.apache.lucene.store NIOFSDirectory ByteBuffersDirectory Directory]
            [org.apache.lucene.index IndexWriter IndexWriterConfig IndexReader DirectoryReader]))
 
 (defn memory-store
   "Create a new index in RAM."
-  ^org.apache.lucene.store.RAMDirectory
+  ^org.apache.lucene.store.ByteBuffersDirectory
   []
-  (RAMDirectory.))
+  (ByteBuffersDirectory.))
 
 (defn disk-store
   "Create a new index in a directory on disk."
